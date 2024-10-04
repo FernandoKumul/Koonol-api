@@ -11,11 +11,6 @@ app.use(express.json());
 
 connectDB()
 
-app.get('/', (req, res) => {
-  res.send('Elmo sabe donde vives!')
-  console.log('Hello World!')
-})
-
 //Rutas
 app.use('/api/users', userRouter)
 
