@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv"
 import connectDB from "./config/db";
 import userRouter from "./routes/userRoutes";
+import rolRouter from "./routes/rolRoutes"
 
 dotenv.config()
 
@@ -13,6 +14,7 @@ connectDB()
 
 //Rutas
 app.use('/api/users', userRouter)
+app.use('/api/rol', rolRouter)
 
 app.listen(PORT, () => {
   console.log(`Server running at PORT: ${PORT}`)
