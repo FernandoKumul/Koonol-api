@@ -3,6 +3,7 @@ import dotenv from "dotenv"
 import connectDB from "./config/db";
 import userRouter from "./routes/userRoutes";
 import rolRouter from "./routes/rolRoutes"
+import tianguisRouter from "./routes/tianguisRoutes"
 
 dotenv.config()
 
@@ -15,6 +16,7 @@ connectDB()
 //Rutas
 app.use('/api/users', userRouter)
 app.use('/api/rol', rolRouter)
+app.use('/api/tianguis', tianguisRouter);
 
 app.listen(PORT, () => {
   console.log(`Server running at PORT: ${PORT}`)
