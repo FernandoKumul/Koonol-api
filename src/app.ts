@@ -6,6 +6,7 @@ import rolRouter from "./routes/rolRoutes"
 import tianguisRouter from "./routes/tianguisRoutes"
 import scheduleTianguisRouter from "./routes/scheduleTianguisRoutes"
 import locationSalesStallsRouter from "./routes/locationSalesStallsRoutes"
+import assistanceRouter from "./routes/assistanceRoutes"
 
 dotenv.config()
 
@@ -21,6 +22,7 @@ app.use('/api/rol', rolRouter)
 app.use('/api/tianguis', tianguisRouter);
 app.use('/api/schedule-tianguis', scheduleTianguisRouter)
 app.use('/api/location-sales-stalls', locationSalesStallsRouter)
+app.use('/api/assistance', assistanceRouter)
 
 
 app.listen(PORT, () => {
