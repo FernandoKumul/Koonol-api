@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { z, ZodError } from 'zod';
+import { ApiResponse } from '../utils/ApiResponse';
+import { IErrorMessage } from '../interfaces/IErrorMessage';
 
 export function validateData(schema: z.ZodObject<any, any>) {
   return (req: Request, res: Response, next: NextFunction) => {
@@ -8,11 +10,10 @@ export function validateData(schema: z.ZodObject<any, any>) {
       next();
     } catch (error) {
       if (error instanceof ZodError) {
-        console.log(error.errors);
-        const errorMessages = error.errors.map((issue: any) => ({
+        const errorMessages: IErrorMessage[] = error.errors.map((issue: any) => ({
           message: `${issue.path.join('.')} is ${issue.message}`,
         }))
-        res.status(400).json({ message: 'Invalid data', errors: errorMessages });
+        res.status(400).json(ApiResponse.errorResponse('Validation Error', 400, errorMessages));
       } else {
         res.status(500).json({ message: 'Internal Server Error' });
       }
