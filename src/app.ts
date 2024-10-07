@@ -10,6 +10,7 @@ import assistanceRouter from "./routes/assistanceRoutes"
 import salesStallsRouter from "./routes/salesStallsRoutes"
 import sellerRouter from "./routes/sellersRoutes"
 import promotionRouter from "./routes/promotionRoutes"
+import subcategoryRouter from "./routes/subcategoryRoutes"
 
 dotenv.config()
 
@@ -29,6 +30,7 @@ app.use('/api/assistance', assistanceRouter)
 app.use('/api/sales-stalls', salesStallsRouter)
 app.use('/api/sellers', sellerRouter)
 app.use('/api/promotion', promotionRouter)
+app.use('/api/subcategory', subcategoryRouter)
 
 
 app.listen(PORT, () => {
