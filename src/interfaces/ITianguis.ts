@@ -13,6 +13,4 @@ export interface ITianguis{
     endTime: string;
     locality: string;
     active: boolean;
-    creationDate: Date;
-    updateDate: Date;
   }

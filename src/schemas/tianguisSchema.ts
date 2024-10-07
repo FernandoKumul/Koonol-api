@@ -17,6 +17,4 @@ export const tianguisSchema = z.object({
   endTime: z.string().min(1, "La hora de finalización es requerida"),
   locality: z.string().min(1, "La localidad es requerida"),
   active: z.boolean(),
-  creationDate: z.date().optional(),
-  updateDate: z.date().optional(),
 });
