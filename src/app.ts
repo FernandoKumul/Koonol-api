@@ -11,6 +11,7 @@ import salesStallsRouter from "./routes/salesStallsRoutes"
 import sellerRouter from "./routes/sellersRoutes"
 import promotionRouter from "./routes/promotionRoutes"
 import subcategoryRouter from "./routes/subcategoryRoutes"
+import categoryRouter from "./routes/categoryRoutes"
 
 dotenv.config()
 
@@ -31,7 +32,7 @@ app.use('/api/sales-stalls', salesStallsRouter)
 app.use('/api/sellers', sellerRouter)
 app.use('/api/promotion', promotionRouter)
 app.use('/api/subcategory', subcategoryRouter)
-
+app.use('/api/category', categoryRouter)
 
 app.listen(PORT, () => {
   console.log(`Server running at PORT: ${PORT}`)
