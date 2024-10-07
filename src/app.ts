@@ -5,6 +5,7 @@ import userRouter from "./routes/userRoutes";
 import rolRouter from "./routes/rolRoutes"
 import tianguisRouter from "./routes/tianguisRoutes"
 import scheduleTianguisRouter from "./routes/scheduleTianguisRoutes"
+import locationSalesStallsRouter from "./routes/locationSalesStallsRoutes"
 
 dotenv.config()
 
@@ -19,6 +20,8 @@ app.use('/api/users', userRouter)
 app.use('/api/rol', rolRouter)
 app.use('/api/tianguis', tianguisRouter);
 app.use('/api/schedule-tianguis', scheduleTianguisRouter)
+app.use('/api/location-sales-stalls', locationSalesStallsRouter)
+
 
 app.listen(PORT, () => {
   console.log(`Server running at PORT: ${PORT}`)
