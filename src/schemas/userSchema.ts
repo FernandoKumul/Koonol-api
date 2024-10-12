@@ -4,7 +4,7 @@ export const userRegistrationSchema = z.object({
   name: z.string().min(1, "El nombre es requerido"),
   lastName: z.string().min(1, "El apellido es requerido"),
   email: z.string().email("Debe ser un correo válido"),
-  password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres"),
+  password: z.string().min(3, "La contraseña debe tener al menos 3 caracteres"),
   rolId: z.string().regex(/^[0-9a-fA-F]{24}$/, "Debe ser un ObjectId válido"),
   photo: z.string().url("Debe ser una URL válida").optional(),
   birthday: z.string().optional(),
