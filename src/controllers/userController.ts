@@ -21,7 +21,7 @@ export default class UserController {
 
       const repeatEmail = await User.findOne({email})
       if(repeatEmail){
-        void res.status(401).json(ApiResponse.errorResponse('El correo electrónico proporcionado ya está en uso', 400));
+        void res.status(403).json(ApiResponse.errorResponse('El correo electrónico proporcionado ya está en uso', 400));
         return;
       }
 

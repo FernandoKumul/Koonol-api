@@ -4,8 +4,8 @@ export interface IUser {
   email: string;
   password: string;
   rolId: string;
-  photo?: string;
-  birthday?: Date;
-  gender?: string;
-  phoneNumber?: string;
+  photo: string | null;
+  birthday: Date;
+  gender: string;
+  phoneNumber: string;
 }

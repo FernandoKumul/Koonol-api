@@ -11,7 +11,7 @@ export function validateData(schema: z.ZodObject<any, any>) {
     } catch (error) {
       if (error instanceof ZodError) {
         const errorMessages: IErrorMessage[] = error.errors.map((issue: any) => ({
-          message: `${issue.path.join('.')} is ${issue.message}`,
+          message: `${issue.path.join('.')}: ${issue.message}`,
         }))
         res.status(400).json(ApiResponse.errorResponse('Validation Error', 400, errorMessages));
       } else {
