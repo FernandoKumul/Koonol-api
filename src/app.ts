@@ -13,6 +13,9 @@ import promotionRouter from "./routes/promotionRoutes"
 import subcategoryRouter from "./routes/subcategoryRoutes"
 import categoryRouter from "./routes/categoryRoutes"
 import authRouter from "./routes/authtenticationRoutes"
+import actionRouter from "./routes/actionRoutes"
+import menuRouter from "./routes/menuRoutes"
+import permissionRouter from "./routes/permissionsRoutes"
 
 dotenv.config()
 
@@ -34,6 +37,9 @@ app.use('/api/sellers', sellerRouter)
 app.use('/api/promotion', promotionRouter)
 app.use('/api/subcategory', subcategoryRouter)
 app.use('/api/category', categoryRouter)
+app.use('/api/actions', actionRouter)
+app.use('/api/menu', menuRouter)
+app.use('/api/permissions', permissionRouter)
 
 app.use('/api/auth', authRouter); 
 
