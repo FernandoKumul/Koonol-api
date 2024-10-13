@@ -20,7 +20,7 @@ export default class UserController {
     try {
       const page = ParseQueryToNumber(req.query.page as string, 1)
       const limit = ParseQueryToNumber(req.query.limit as string, 10)
-      const search = req.query.search
+      const search = req.query.search || ''
       const rol = req.query.rol
       const sort = req.query.sort as string || 'newest'
 
@@ -61,18 +61,18 @@ export default class UserController {
 
       const users = await User.find({
         $or: [      
-          {name: { $regex: search || '', $options: "i" }},
-          {lastName: { $regex: search || '', $options: "i" }},
-          {email: { $regex: search || '', $options: "i" }},
+          {name: { $regex: search, $options: "i" }},
+          {lastName: { $regex: search, $options: "i" }},
+          {email: { $regex: search, $options: "i" }},
         ],
         rolId: { $in: idListRol }
-      }).skip(offset).limit(limit).sort(sortQuery)
+      }).populate('rolId').skip(offset).limit(limit).sort(sortQuery)
 
       const totalUsers = await User.countDocuments({
         $or: [      
-          {name: { $regex: search || '', $options: "i" }},
-          {lastName: { $regex: search || '', $options: "i" }},
-          {email: { $regex: search || '', $options: "i" }},
+          {name: { $regex: search, $options: "i" }},
+          {lastName: { $regex: search, $options: "i" }},
+          {email: { $regex: search, $options: "i" }},
         ],
         rolId: { $in: idListRol }
       })
