@@ -4,7 +4,7 @@ import { ISubcategory } from '../interfaces/ISubcategory';
 export interface ISubcategoryModel extends ISubcategory, Document {}
 
 const subcategorySchema: Schema = new Schema({
-  name: { type: String, required: true },  
+  name: { type: String, required: true },
   categoryId: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', required: true }
 });
 
