@@ -3,6 +3,8 @@ import User from "../models/userModel";
 import { ApiResponse } from "../utils/ApiResponse";
 import { hashPassword } from "../utils/passwordCode";
 import ParseQueryToNumber from "../utils/ParseQueryToNumber";
+import Tianguis from "../models/tianguisModel";
+import mongoose from "mongoose";
 
 export default class UserController {
 
@@ -57,7 +59,6 @@ export default class UserController {
       }
 
       const offset = (page - 1) * limit
-      console.log(offset)
 
       const users = await User.find({
         $or: [      
@@ -110,4 +111,35 @@ export default class UserController {
       res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
     }
   };
+
+  static deleteUser = async (req: Request, res: Response) => {
+    const { id } = req.params
+
+    try {
+
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json(ApiResponse.errorResponse("El ID proporcionado no es válido", 400))
+        return
+      }
+
+      const exists = await Tianguis.exists({userId: id})
+
+      if (exists) {
+        res.status(403).json(ApiResponse.errorResponse("No se puede eliminar el usuario porque tiene tianguis asociados", 403));
+        return
+      }
+
+      const user = await User.findByIdAndDelete(id)
+
+      if (!user) {
+        res.status(404).json(ApiResponse.errorResponse("Usuario no encontrado", 404))
+        return
+      }
+
+      res.status(200).json(ApiResponse.successResponse("Usuario eliminado con éxito", user))
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "An error occurred";
+      res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
+    }
+  }
 }
