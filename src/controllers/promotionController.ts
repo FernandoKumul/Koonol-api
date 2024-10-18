@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import Promotion from "../models/promotionModel";
 import { ApiResponse } from "../utils/ApiResponse";
+import ParseQueryToNumber from "../utils/ParseQueryToNumber";
 
 export default class PromotionsController {
 
@@ -11,6 +12,84 @@ export default class PromotionsController {
       res.status(200).json(ApiResponse.successResponse("Promociones encontradas", promotions));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
+      res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
+    }
+  };
+
+  static searchPromotions = async (req: Request, res: Response) => {
+    try {
+      const page = ParseQueryToNumber(req.query.page as string, 1);
+      const limit = ParseQueryToNumber(req.query.limit as string, 10);
+      const sort = (req.query.sort as string) || "newest";
+      const salesStallId = req.query.salesStallId as string;
+      const minPay = req.query.minPay ? parseFloat(req.query.minPay as string) : undefined;
+      const maxPay = req.query.maxPay ? parseFloat(req.query.maxPay as string) : undefined;
+      const startDate = req.query.startDate as string;
+      const endDate = req.query.endDate as string;
+ 
+      let sortQuery: any = {};
+
+      switch (sort) {
+        case "newest":
+          sortQuery = { creationDate: "desc" };
+          break;
+        case "oldest":
+          sortQuery = { creationDate: "asc" };
+          break;
+        case "pay-asc":
+          sortQuery = { pay: "asc" };
+          break;
+        case "pay-desc":
+          sortQuery = { pay: "desc" };
+          break;
+        default:
+          sortQuery = { creationDate: "desc" };
+      }
+
+      const offset = (page - 1) * limit;
+ 
+      const searchFilters: any = {};
+ 
+      if (salesStallId) {
+        searchFilters.salesStallId = salesStallId;
+      }
+ 
+      if (minPay !== undefined || maxPay !== undefined) {
+        searchFilters.pay = {};
+        if (minPay !== undefined) {
+          searchFilters.pay.$gte = minPay;
+        }
+        if (maxPay !== undefined) {
+          searchFilters.pay.$lte = maxPay;
+        }
+      }
+ 
+      if (startDate || endDate) {
+        searchFilters.startDate = {};
+        if (startDate) {
+          searchFilters.startDate.$gte = new Date(startDate);
+        }
+        if (endDate) {
+          searchFilters.startDate.$lte = new Date(endDate);
+        }
+      }
+ 
+      const promotionsList = await Promotion.find(searchFilters)
+        .skip(offset)
+        .limit(limit)
+        .sort(sortQuery);
+
+      const totalPromotions = await Promotion.countDocuments(searchFilters);
+
+      res.status(200).json(
+        ApiResponse.successResponse("Promociones encontradas", {
+          count: totalPromotions,
+          results: promotionsList,
+        })
+      );
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Ocurrió un error";
       res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
     }
   };

@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import Category from "../models/categoryModel";
 import { ApiResponse } from "../utils/ApiResponse";
+import ParseQueryToNumber from "../utils/ParseQueryToNumber";
 
 export default class CategoryController {
 
@@ -11,6 +12,60 @@ export default class CategoryController {
       res.status(200).json(ApiResponse.successResponse("Categorías encontradas", categories));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
+      res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
+    }
+  };
+  
+  static searchCategories = async (req: Request, res: Response) => {
+    try {
+      const page = ParseQueryToNumber(req.query.page as string, 1);
+      const limit = ParseQueryToNumber(req.query.limit as string, 10);
+      const search = (req.query.search as string) || "";
+      const sort = (req.query.sort as string) || "newest";
+
+      // Configurar opciones de ordenamiento
+      let sortQuery = {};
+
+      switch (sort) {
+        case "newest":
+          sortQuery = { creationDate: "desc" };
+          break;
+        case "oldest":
+          sortQuery = { creationDate: "asc" };
+          break;
+        case "a-z":
+          sortQuery = { name: "asc" };
+          break;
+        case "z-a":
+          sortQuery = { name: "desc" };
+          break;
+        default:
+          sortQuery = { creationDate: "desc" };
+      }
+
+      const offset = (page - 1) * limit;
+
+      // Construir filtros de búsqueda
+      const searchFilters: any = {
+        name: { $regex: search, $options: "i" },
+      };
+
+      const categoriesList = await Category.find(searchFilters)
+        .skip(offset)
+        .limit(limit)
+        .sort(sortQuery);
+
+      const totalCategories = await Category.countDocuments(searchFilters);
+
+      res.status(200).json(
+        ApiResponse.successResponse("Categorías encontradas", {
+          count: totalCategories,
+          results: categoriesList,
+        })
+      );
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Ocurrió un error";
       res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
     }
   };

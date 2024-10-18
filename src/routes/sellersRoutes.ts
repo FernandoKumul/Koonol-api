@@ -5,7 +5,8 @@ import { sellerSchema } from "../schemas/sellersSchema";
 
 const router = express.Router();
 
-router.get('/', SellersController.getAllSellers);
+router.get('/', SellersController.searchSellers);
+router.get('/all', SellersController.getAllSellers);
 router.post('/', validateData(sellerSchema), SellersController.createSeller);
 
 export default router;

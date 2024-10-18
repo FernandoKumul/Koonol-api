@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import Seller from "../models/sellersModel";
 import { ApiResponse } from "../utils/ApiResponse";
+import ParseQueryToNumber from "../utils/ParseQueryToNumber";
 
 export default class SellersController {
 
@@ -11,6 +12,68 @@ export default class SellersController {
       res.status(200).json(ApiResponse.successResponse("Vendedores encontrados", sellers));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
+      res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
+    }
+  };
+
+  static searchSellers = async (req: Request, res: Response) => {
+    try {
+      const page = ParseQueryToNumber(req.query.page as string, 1);
+      const limit = ParseQueryToNumber(req.query.limit as string, 10);
+      const search = (req.query.search as string) || "";
+      const sort = (req.query.sort as string) || "newest";
+      const gender = req.query.gender as string;
+
+      let sortQuery = {};
+
+      switch (sort) {
+        case "newest":
+          sortQuery = { creationDate: "desc" };
+          break;
+        case "oldest":
+          sortQuery = { creationDate: "asc" };
+          break;
+        case "a-z":
+          sortQuery = { name: "asc" };
+          break;
+        case "z-a":
+          sortQuery = { name: "desc" };
+          break;
+        default:
+          sortQuery = { creationDate: "desc" };
+      }
+
+      const offset = (page - 1) * limit;
+
+      const searchFilters: any = {
+        $or: [
+          { name: { $regex: search, $options: "i" } },
+          { lastName: { $regex: search, $options: "i" } },
+          { email: { $regex: search, $options: "i" } },
+          { phoneNumber: { $regex: search, $options: "i" } },
+        ],
+      };
+
+      if (gender) {
+        searchFilters.gender = gender;
+      }
+
+      const sellersList = await Seller.find(searchFilters)
+        .skip(offset)
+        .limit(limit)
+        .sort(sortQuery);
+
+      const totalSellers = await Seller.countDocuments(searchFilters);
+
+      res.status(200).json(
+        ApiResponse.successResponse("Vendedores encontrados", {
+          count: totalSellers,
+          results: sellersList,
+        })
+      );
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Ocurrió un error";
       res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
     }
   };

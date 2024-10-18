@@ -5,7 +5,8 @@ import { salesStallsSchema } from "../schemas/salesStallsSchema";
 
 const router = express.Router();
 
-router.get('/', SalesStallsController.getAllSalesStalls);
+router.get('/', SalesStallsController.searchSalesStalls);
+router.get('/all', SalesStallsController.getAllSalesStalls);
 router.post('/', validateData(salesStallsSchema), SalesStallsController.createSalesStalls);
 
 export default router;
