@@ -18,6 +18,29 @@ export default class UserController {
     }
   };
 
+  static getUserById = async (req: Request, res: Response) => {
+    const { id } = req.params
+    try {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json(ApiResponse.errorResponse("El ID proporcionado no es válido", 400))
+        return
+      }
+
+      const user = await User.findById(id).populate('rolId')
+
+      if (!user) {
+        res.status(404).json(ApiResponse.errorResponse("Usuario no encontrado", 404))
+        return
+      }
+
+      res.status(200).json(ApiResponse.successResponse("Usuario encontrado", user))
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "An error occurred";
+      res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
+    }
+  }
+
   static searchUsers = async (req: Request, res: Response) => {
     try {
       const page = ParseQueryToNumber(req.query.page as string, 1)
