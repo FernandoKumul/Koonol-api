@@ -16,6 +16,7 @@ import authRouter from "./routes/authtenticationRoutes"
 import actionRouter from "./routes/actionRoutes"
 import menuRouter from "./routes/menuRoutes"
 import permissionRouter from "./routes/permissionsRoutes"
+import uploadRouter from "./routes/uploadRoutes"
 
 dotenv.config()
 
@@ -40,6 +41,7 @@ app.use('/api/category', categoryRouter)
 app.use('/api/actions', actionRouter)
 app.use('/api/menu', menuRouter)
 app.use('/api/permissions', permissionRouter)
+app.use('/api/upload', uploadRouter)
 
 app.use('/api/auth', authRouter); 
 
