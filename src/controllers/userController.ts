@@ -18,6 +18,29 @@ export default class UserController {
     }
   };
 
+  static getUserById = async (req: Request, res: Response) => {
+    const { id } = req.params
+    try {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json(ApiResponse.errorResponse("El ID proporcionado no es válido", 400))
+        return
+      }
+
+      const user = await User.findById(id).populate('rolId')
+
+      if (!user) {
+        res.status(404).json(ApiResponse.errorResponse("Usuario no encontrado", 404))
+        return
+      }
+
+      res.status(200).json(ApiResponse.successResponse("Usuario encontrado", user))
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "An error occurred";
+      res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
+    }
+  }
+
   static searchUsers = async (req: Request, res: Response) => {
     try {
       const page = ParseQueryToNumber(req.query.page as string, 1)
@@ -61,19 +84,19 @@ export default class UserController {
       const offset = (page - 1) * limit
 
       const users = await User.find({
-        $or: [      
-          {name: { $regex: search, $options: "i" }},
-          {lastName: { $regex: search, $options: "i" }},
-          {email: { $regex: search, $options: "i" }},
+        $or: [
+          { name: { $regex: search, $options: "i" } },
+          { lastName: { $regex: search, $options: "i" } },
+          { email: { $regex: search, $options: "i" } },
         ],
         rolId: { $in: idListRol }
       }).populate('rolId').skip(offset).limit(limit).sort(sortQuery)
 
       const totalUsers = await User.countDocuments({
-        $or: [      
-          {name: { $regex: search, $options: "i" }},
-          {lastName: { $regex: search, $options: "i" }},
-          {email: { $regex: search, $options: "i" }},
+        $or: [
+          { name: { $regex: search, $options: "i" } },
+          { lastName: { $regex: search, $options: "i" } },
+          { email: { $regex: search, $options: "i" } },
         ],
         rolId: { $in: idListRol }
       })
@@ -90,18 +113,25 @@ export default class UserController {
 
   static createUser = async (req: Request, res: Response) => {
     try {
-      const { email } = req.body
+      const { email, lastName, name, password, rolId, photo, birthday, gender, phoneNumber } = req.body
 
-      const repeatEmail = await User.findOne({ email })
+      const repeatEmail = await User.findOne({ email: email.trim() })
       if (repeatEmail) {
         void res.status(403).json(ApiResponse.errorResponse('El correo electrónico proporcionado ya está en uso', 400));
         return;
       }
 
-      const hashedPassword = await hashPassword(req.body.password);
+      const hashedPassword = await hashPassword(password);
       const newUser = new User({
-        ...req.body,
-        password: hashedPassword
+        email: email.trim(),
+        lastName: lastName.trim(),
+        name: name.trim(),
+        password: hashedPassword,
+        rolId,
+        photo,
+        birthday,
+        gender,
+        phoneNumber
       });
 
       const savedUser = await newUser.save();
@@ -122,7 +152,7 @@ export default class UserController {
         return
       }
 
-      const exists = await Tianguis.exists({userId: id})
+      const exists = await Tianguis.exists({ userId: id })
 
       if (exists) {
         res.status(403).json(ApiResponse.errorResponse("No se puede eliminar el usuario porque tiene tianguis asociados", 403));
@@ -137,6 +167,37 @@ export default class UserController {
       }
 
       res.status(200).json(ApiResponse.successResponse("Usuario eliminado con éxito", user))
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "An error occurred";
+      res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
+    }
+  }
+
+  static updateUser = async (req: Request, res: Response) => {
+    try {
+      const { email, lastName, name, password, rolId, photo, birthday, gender, phoneNumber } = req.body
+      const id = req.params.id
+
+      const repeatEmail = await User.findOne({ _id: { $ne: id }, email: email.trim() })
+      if (repeatEmail) {
+        res.status(403).json(ApiResponse.errorResponse('El correo electrónico proporcionado ya está en uso', 400));
+        return;
+      }
+
+      const updateData:any = { email, lastName, name, rolId, photo, birthday, gender, phoneNumber, updateDate: Date.now()  }
+
+      if (password) {
+        const hashedPassword = await hashPassword(password);
+        updateData.password = hashedPassword
+      }
+
+      const updateUser = await User.findByIdAndUpdate(id, updateData, { new: true });
+      if (!updateUser) {
+        res.status(404).json(ApiResponse.errorResponse("Usuario no encontrado", 404));
+        return
+      }
+
+      res.status(200).json(ApiResponse.successResponse("Usuario actualizado con éxito", updateUser));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "An error occurred";
       res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
