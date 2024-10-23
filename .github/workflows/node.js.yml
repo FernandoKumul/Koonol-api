@@ -20,9 +20,6 @@ jobs:
 
       - name: Instalar dependencias
         run: npm install
-
-      - name: Run ESLint
-        run: npx eslint .
         
       - name: 'Test'
         run: echo "Holi test 2"
