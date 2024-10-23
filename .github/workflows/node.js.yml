@@ -10,12 +10,27 @@ on:
 jobs:
   koonol:
 
-    runs-on: ubuntu-latest
+    runs-on:  windows-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x, 21.x, 21.x, 22.x]
     
     steps:
       - uses: actions/checkout@v4.2.1
+      - name: Configurar Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
       - name: 'Checkout'
         run: echo "Holi test"
+
+      - name: Instalar dependencias
+        run: npm install
+
+      - name: Compilar proyecto
+        run: npm run build
+      
         
       - name: Run ESLint
         run: npx eslint . --ext .js,.jsx,.ts,.tsx
