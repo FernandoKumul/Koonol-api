@@ -22,7 +22,7 @@ export default class SellersController {
       const limit = ParseQueryToNumber(req.query.limit as string, 10);
       const search = (req.query.search as string) || "";
       const sort = (req.query.sort as string) || "newest";
-      const gender = req.query.gender as string;
+      const gender = req.query.gender as string; //male | female | other | ''
 
       let sortQuery = {};
 
@@ -82,6 +82,7 @@ export default class SellersController {
   static createSeller = async (req: Request, res: Response) => {
     try {
       const { name, lastName, email, photo, birthday, gender, phoneNumber } = req.body;
+      console.log(req.body);
 
       const newSeller = new Seller({
         name,
