@@ -7,5 +7,5 @@ export const sellerSchema = z.object({
   photo: z.string().url().nullable().optional(), 
   birthday: z.string({required_error: "La fecha de cumpleaños es requerida"}),
   gender: z.enum(["male", "female", "other"], {required_error: "El género es requerido"}),
-  phoneNumber: z.string().min(10, "Debe ser un número de teléfono válido (10 dígitos)").optional(),
+  phoneNumber: z.string().min(10, "Debe ser un número de teléfono válido (10 dígitos)").nullable().optional(),
 });

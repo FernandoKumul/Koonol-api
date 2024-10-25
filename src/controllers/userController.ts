@@ -184,7 +184,17 @@ export default class UserController {
         return;
       }
 
-      const updateData:any = { email, lastName, name, rolId, photo, birthday, gender, phoneNumber, updateDate: Date.now()  }
+      const updateData: any = {
+        email: email.trim(),
+        lastName: lastName.trim(), 
+        name: name.trim(), 
+        rolId, 
+        photo: photo ?? null, 
+        birthday, 
+        gender, 
+        phoneNumber, 
+        updateDate: Date.now()
+      }
 
       if (password) {
         const hashedPassword = await hashPassword(password);

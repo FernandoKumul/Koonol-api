@@ -83,16 +83,16 @@ export default class SellersController {
   static createSeller = async (req: Request, res: Response) => {
     try {
       const { name, lastName, email, photo, birthday, gender, phoneNumber } = req.body;
-      console.log(req.body);
 
       const newSeller = new Seller({
-        name,
-        lastName,
-        email,
+        name: name.trim(),
+        lastName: lastName.trim(),
+        email: email ? email.trim() : null,
         photo,
         birthday,
         gender,
-        phoneNumber
+        phoneNumber: phoneNumber ?? null,
+        updateDate: Date.now()
       });
 
       const savedSeller = await newSeller.save();
@@ -106,12 +106,12 @@ export default class SellersController {
   // Obtener un vendedor por su ID
   static getSellerById = async (req: Request, res: Response) => {
     try {
-      const { id } = req.params; 
+      const { id } = req.params;
       const seller = await Seller.findById(id);
 
       if (!seller) {
         res.status(404).json(ApiResponse.errorResponse("Vendedor no encontrado", 404));
-        return 
+        return
       }
 
       res.status(200).json(ApiResponse.successResponse("Vendedor encontrado", seller));
@@ -124,11 +124,21 @@ export default class SellersController {
   // Actualizar un vendedor
   static updateSeller = async (req: Request, res: Response) => {
     try {
-      const { id } = req.params; 
-      const updatedSeller = await Seller.findByIdAndUpdate(id, req.body, { new: true });
+      const { id } = req.params;
+      const { name, lastName, email, photo, birthday, gender, phoneNumber } = req.body;
+      const updatedSeller = await Seller.findByIdAndUpdate(id, { 
+        name, 
+        lastName, 
+        email: email ?? null, 
+        photo: photo ?? null, 
+        birthday, 
+        gender, 
+        phoneNumber: phoneNumber ?? null 
+      }, { new: true });
 
       if (!updatedSeller) {
-        return res.status(404).json(ApiResponse.errorResponse("Vendedor no encontrado", 404));
+        res.status(404).json(ApiResponse.errorResponse("Vendedor no encontrado", 404));
+        return
       }
 
       res.status(200).json(ApiResponse.successResponse("Vendedor actualizado con éxito", updatedSeller));
@@ -141,19 +151,19 @@ export default class SellersController {
   // Eliminar un vendedor
   static deleteSeller = async (req: Request, res: Response) => {
     try {
-      const { id } = req.params; 
+      const { id } = req.params;
       const deletedSeller = await Seller.findByIdAndDelete(id);
 
       const exists = await SalesStalls.exists({ sellerId: id })
 
       if (exists) {
         res.status(403).json(ApiResponse.errorResponse("No se puede eliminar el vendedor porque tiene puestos de venta asociados", 403));
-        return 
+        return
       }
 
       if (!deletedSeller) {
         res.status(404).json(ApiResponse.errorResponse("Vendedor no encontrado", 404));
-        return 
+        return
       }
 
       res.status(200).json(ApiResponse.successResponse("Vendedor eliminado con éxito", deletedSeller));
