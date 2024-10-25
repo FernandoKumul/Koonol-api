@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import Seller from "../models/sellersModel";
 import { ApiResponse } from "../utils/ApiResponse";
 import ParseQueryToNumber from "../utils/ParseQueryToNumber";
+import SalesStalls from "../models/salesStallsModel";
 
 export default class SellersController {
 
@@ -22,7 +23,7 @@ export default class SellersController {
       const limit = ParseQueryToNumber(req.query.limit as string, 10);
       const search = (req.query.search as string) || "";
       const sort = (req.query.sort as string) || "newest";
-      const gender = req.query.gender as string;
+      const gender = req.query.gender as string; //male | female | other | ''
 
       let sortQuery = {};
 
@@ -82,6 +83,7 @@ export default class SellersController {
   static createSeller = async (req: Request, res: Response) => {
     try {
       const { name, lastName, email, photo, birthday, gender, phoneNumber } = req.body;
+      console.log(req.body);
 
       const newSeller = new Seller({
         name,
@@ -108,7 +110,8 @@ export default class SellersController {
       const seller = await Seller.findById(id);
 
       if (!seller) {
-        return res.status(404).json(ApiResponse.errorResponse("Vendedor no encontrado", 404));
+        res.status(404).json(ApiResponse.errorResponse("Vendedor no encontrado", 404));
+        return 
       }
 
       res.status(200).json(ApiResponse.successResponse("Vendedor encontrado", seller));
@@ -141,8 +144,16 @@ export default class SellersController {
       const { id } = req.params; 
       const deletedSeller = await Seller.findByIdAndDelete(id);
 
+      const exists = await SalesStalls.exists({ sellerId: id })
+
+      if (exists) {
+        res.status(403).json(ApiResponse.errorResponse("No se puede eliminar el vendedor porque tiene puestos de venta asociados", 403));
+        return 
+      }
+
       if (!deletedSeller) {
-        return res.status(404).json(ApiResponse.errorResponse("Vendedor no encontrado", 404));
+        res.status(404).json(ApiResponse.errorResponse("Vendedor no encontrado", 404));
+        return 
       }
 
       res.status(200).json(ApiResponse.successResponse("Vendedor eliminado con éxito", deletedSeller));
