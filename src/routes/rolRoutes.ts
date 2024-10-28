@@ -1,7 +1,7 @@
 import express from "express";
 import RolController from "../controllers/rolController";
 import { validateData } from "../middleware/validationMiddleware";
-import { rolSchema } from "../schemas/rolSchema";
+import { rolSchema } from "../schemas/RolSchema/rolSchema";
 
 const router = express.Router();
 

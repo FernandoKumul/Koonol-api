@@ -1,7 +1,7 @@
 import express from "express";
 import AssistanceController from "../controllers/assistanceController";
 import { validateData } from "../middleware/validationMiddleware";
-import { assistanceSchema } from "../schemas/assistanceSchema";
+import { assistanceSchema } from "../schemas/AssitanceSchema/assistanceSchema";
 
 const router = express.Router();
 

@@ -4,7 +4,7 @@ import Rol from "../models/rolModel";
 import { comparePassword } from "../utils/passwordCode";
 import { ApiResponse } from "../utils/ApiResponse";
 import { ILogin } from "../interfaces/IAuthenticacion";
-import { loginSchema } from "../schemas/authenticacionSchema";
+import { loginSchema } from "../schemas/AuthenticationSchema/authenticacionSchema";
 import { generateToken } from "../utils/generateToken";
 
 export default class AuthController {
