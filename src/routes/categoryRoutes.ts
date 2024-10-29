@@ -1,7 +1,7 @@
 import express from "express";
 import CategoryController from "../controllers/categoryController";
 import { validateData } from "../middleware/validationMiddleware";
-import { categorySchema } from "../schemas/categorySchema";
+import { categorySchema } from "../schemas/CategorySchema/categorySchema";
 
 const router = express.Router();
 

@@ -1,7 +1,7 @@
 import express from "express";
 import ActionController from "../controllers/actionController";
 import { validateData } from "../middleware/validationMiddleware";
-import { actionSchema } from "../schemas/actionSchema";
+import { actionSchema } from "../schemas/ActionSchema/actionSchema";
 
 const router = express.Router();
 

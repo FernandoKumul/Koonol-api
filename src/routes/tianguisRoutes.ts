@@ -1,7 +1,7 @@
 import express from 'express';
 import TianguisController from '../controllers/tianguisController';
 import { validateData } from '../middleware/validationMiddleware';
-import { tianguisSchema } from '../schemas/tianguisSchema';
+import { tianguisSchema } from '../schemas/TianguisSchema/tianguisSchema';
 import { authMiddleware } from "../middleware/authMiddleware";  
 import { permissionMiddleware } from "../middleware/permissionsMiddleware";  
 

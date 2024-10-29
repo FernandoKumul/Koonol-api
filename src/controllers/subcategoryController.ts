@@ -1,6 +1,7 @@
-import { Request, Response } from "express";
+import { Request, RequestHandler, Response } from "express";
 import Subcategory from "../models/subcategoryModel";
 import { ApiResponse } from "../utils/ApiResponse";
+import mongoose from "mongoose";
 
 export default class SubCategoryController {
 
@@ -36,12 +37,18 @@ export default class SubCategoryController {
 
   // Obtener una subcategoría por su ID
   static getSubcategoryById = async (req: Request, res: Response) => {
+    const {id } = req.params
     try {
-      const { id } = req.params;  // Obtener el ID de los parámetros
-      const subcategory = await Subcategory.findById(id);
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json(ApiResponse.errorResponse("El ID proporcionado no es válido", 400))
+        return
+      }
+
+      const subcategory = await Subcategory.findById(id).populate('categoryId')
 
       if (!subcategory) {
-        return res.status(404).json(ApiResponse.errorResponse("Subcategoría no encontrada", 404));
+        res.status(404).json(ApiResponse.errorResponse("Categoría no encontrada", 404))
+        return
       }
 
       res.status(200).json(ApiResponse.successResponse("Subcategoría encontrada", subcategory));
@@ -52,21 +59,34 @@ export default class SubCategoryController {
   };
 
   // Actualizar una subcategoría
-  static updateSubcategory = async (req: Request, res: Response) => {
+  static updateSubcategory: RequestHandler = async (req, res): Promise<void> => {
     try {
-      const { id } = req.params;  // Obtener el ID de los parámetros
-      const updatedSubcategory = await Subcategory.findByIdAndUpdate(id, req.body, { new: true });
-
-      if (!updatedSubcategory) {
-        return res.status(404).json(ApiResponse.errorResponse("Subcategoría no encontrada", 404));
+      const { name, categoryId } = req.body;
+      const id = req.params.id;
+  
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json(ApiResponse.errorResponse("El ID proporcionado no es válido", 400));
+        return;
       }
-
+  
+      const updateData: any = {};
+      if (name) updateData.name = name;
+      if (categoryId) updateData.categoryId = categoryId;
+      
+      const updatedSubcategory = await Subcategory.findByIdAndUpdate(id, updateData, { new: true });
+      
+      if (!updatedSubcategory) {
+        res.status(404).json(ApiResponse.errorResponse("Subcategoría no encontrada", 404));
+        return;
+      }
+  
       res.status(200).json(ApiResponse.successResponse("Subcategoría actualizada con éxito", updatedSubcategory));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
       res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
     }
   };
+  
 
   // Eliminar una subcategoría
   static deleteSubcategory = async (req: Request, res: Response) => {

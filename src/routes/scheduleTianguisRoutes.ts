@@ -1,7 +1,7 @@
 import express from 'express';
 import ScheduleTianguisController from '../controllers/scheduleTianguisController';
 import { validateData } from '../middleware/validationMiddleware';
-import { scheduleTianguisSchema } from '../schemas/scheduleTianguisSchema';
+import { scheduleTianguisSchema } from '../schemas/ScheduleTianguisSchema/scheduleTianguisSchema';
 
 const router = express.Router();
 

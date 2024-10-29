@@ -1,7 +1,7 @@
 import express from "express";
 import PromotionsController from "../controllers/promotionController";
 import { validateData } from "../middleware/validationMiddleware";
-import { promotionSchema } from "../schemas/promotionSchema";
+import { promotionSchema } from "../schemas/PromotionSchema/promotionSchema";
 
 const router = express.Router();
 
