@@ -186,13 +186,13 @@ export default class UserController {
 
       const updateData: any = {
         email: email.trim(),
-        lastName: lastName.trim(), 
-        name: name.trim(), 
-        rolId, 
-        photo: photo ?? null, 
-        birthday, 
-        gender, 
-        phoneNumber, 
+        lastName: lastName.trim(),
+        name: name.trim(),
+        rolId,
+        photo: photo ?? null,
+        birthday,
+        gender,
+        phoneNumber,
         updateDate: Date.now()
       }
 
@@ -208,6 +208,77 @@ export default class UserController {
       }
 
       res.status(200).json(ApiResponse.successResponse("Usuario actualizado con éxito", updateUser));
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "An error occurred";
+      res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
+    }
+  }
+
+  static getProfile = async (req: Request, res: Response) => {
+    if (!req.user) {
+      res.status(401).json(ApiResponse.errorResponse("No autorizado", 401))
+      return
+    }
+
+    const { userId } = req.user
+    try {
+      const user = await User.findById(userId).populate('rolId')
+      if (!user) {
+        res.status(404).json(ApiResponse.errorResponse("Usuario no encontrado", 404))
+        return
+      }
+
+      res.status(200).json(ApiResponse.successResponse("Perfil encontrado", user))
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "An error occurred";
+      res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
+    }
+  }
+
+  static updateProfile = async (req: Request, res: Response) => {
+    if (!req.user) {
+      res.status(401).json(ApiResponse.errorResponse("No autorizado", 401))
+      return
+    }
+    const { lastName, name, photo, birthday, gender, phoneNumber } = req.body
+    const { userId } = req.user
+    try {
+      const user = await User.findByIdAndUpdate(userId, {
+        lastName: lastName.trim(), name: name.trim(), photo, birthday, gender, phoneNumber, updateDate: Date.now()
+      }, { new: true })
+
+      if (!user) {
+        res.status(404).json(ApiResponse.errorResponse("Usuario no encontrado", 404))
+        return
+      }
+
+      res.status(200).json(ApiResponse.successResponse("Perfil actualizado con éxito", user))
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "An error occurred";
+      res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
+    }
+  }
+
+  static changePassword = async (req: Request, res: Response) => {
+    try {
+      if (!req.user) {
+        res.status(401).json(ApiResponse.errorResponse("No autorizado", 401))
+        return
+      }
+
+      const { userId } = req.user
+      const { password } = req.body
+
+      const hashedPassword = await hashPassword(password);
+
+      const user = await User.findByIdAndUpdate(userId, { password: hashedPassword, updateDate: Date.now() }, { new: true })
+
+      if (!user) {
+        res.status(404).json(ApiResponse.errorResponse("Usuario no encontrado", 404))
+        return
+      }
+
+      res.status(200).json(ApiResponse.successResponse("Contraseña actualizada con éxito", true))
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "An error occurred";
       res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));

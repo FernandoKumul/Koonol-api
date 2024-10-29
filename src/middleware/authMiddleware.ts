@@ -1,11 +1,12 @@
 import jwt from 'jsonwebtoken';
 import { Response, NextFunction, Request } from 'express';
+import { ApiResponse } from '../utils/ApiResponse';
 
 export const authMiddleware = (req: Request, res: Response, next: NextFunction): void => {
   const token = req.headers.authorization?.split(" ")[1];
 
   if (!token) {
-    res.status(401).json({ message: "Token no proporcionado" });
+    res.status(401).json(ApiResponse.errorResponse("Token no proporcionado", 401));
     return; 
   }
 
