@@ -1,11 +1,11 @@
 import express from 'express';
 import UserControler from '../controllers/userController';
 import { validateData } from '../middleware/validationMiddleware';
-import { userRegistrationSchema } from '../schemas/userSchema';
-import { userUpdateSchema } from '../schemas/userUpdateSchema';
 import { authMiddleware } from '../middleware/authMiddleware';
 import { updateProfileSchema } from '../schemas/updateProfileSchema';
 import { onlyPasswordSchema } from '../schemas/onlyPasswordSchema';
+import { userRegistrationSchema } from '../schemas/UserSchema/userSchema';
+import { userUpdateSchema } from '../schemas/UserSchema/userUpdateSchema';
 
 const router = express.Router();
 
