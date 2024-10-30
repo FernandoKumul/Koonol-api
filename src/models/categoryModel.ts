@@ -5,7 +5,8 @@ export interface ICategoryModel extends ICategory, Document {}
 
 const categorySchema: Schema = new Schema({
   name: { type: String, required: true },  
-  recommendedRate: { type: Number, required: true, min: 0 } 
+  recommendedRate: { type: Number, required: true, min: 0 },
+  creationDate: { type: Date, default: Date.now },
 });
 
 const Category = mongoose.model<ICategoryModel>('Category', categorySchema);

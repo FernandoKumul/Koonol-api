@@ -6,9 +6,9 @@ import { categoryUpdateSchema } from "../schemas/CategorySchema/categoryUpdateSc
 
 const router = express.Router();
 
-router.get('/', CategoryController.getAllCategories);
+router.get('/all', CategoryController.getAllCategories);
 router.post('/', validateData(categorySchema), CategoryController.createCategory);
-router.get('/all', CategoryController.searchCategories);
+router.get('/', CategoryController.searchCategories);
 router.get('/:id', CategoryController.getCategoryById);
 router.put('/:id', validateData(categoryUpdateSchema), CategoryController.updateCategory);
 router.delete('/:id', CategoryController.deleteCategory);

@@ -6,9 +6,9 @@ import { sellerUpdateSchema } from "../schemas/SellersSchema/sellersUpdateSchema
 
 const router = express.Router();
 
-router.get('/', SellersController.getAllSellers);
+router.get('/all', SellersController.getAllSellers);
 router.post('/', validateData(sellerSchema), SellersController.createSeller);
-router.get('/all', SellersController.searchSellers);
+router.get('/', SellersController.searchSellers);
 router.get('/:id', SellersController.getSellerById);
 router.put('/:id', validateData(sellerUpdateSchema), SellersController.updateSeller);
 router.delete('/:id', SellersController.deleteSeller);
