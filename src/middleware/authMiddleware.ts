@@ -21,7 +21,7 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction):
     };
     next(); 
   } catch (error) {
-    res.status(401).json({ message: "Token no válido" });
+    res.status(401).json(ApiResponse.errorResponse("Token inválido", 401));
     return; 
   }
 };
