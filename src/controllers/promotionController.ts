@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import Promotion from "../models/promotionModel";
 import { ApiResponse } from "../utils/ApiResponse";
 import ParseQueryToNumber from "../utils/ParseQueryToNumber";
+import mongoose from "mongoose";
 
 export default class PromotionsController {
 
@@ -16,6 +17,7 @@ export default class PromotionsController {
     }
   };
 
+  // Buscar promociones con paginación, filtros y ordenamiento
   static searchPromotions = async (req: Request, res: Response) => {
     try {
       const page = ParseQueryToNumber(req.query.page as string, 1);
@@ -26,7 +28,7 @@ export default class PromotionsController {
       const maxPay = req.query.maxPay ? parseFloat(req.query.maxPay as string) : undefined;
       const startDate = req.query.startDate as string;
       const endDate = req.query.endDate as string;
- 
+
       let sortQuery: any = {};
 
       switch (sort) {
@@ -47,13 +49,13 @@ export default class PromotionsController {
       }
 
       const offset = (page - 1) * limit;
- 
+
       const searchFilters: any = {};
- 
+
       if (salesStallId) {
         searchFilters.salesStallId = salesStallId;
       }
- 
+
       if (minPay !== undefined || maxPay !== undefined) {
         searchFilters.pay = {};
         if (minPay !== undefined) {
@@ -63,7 +65,7 @@ export default class PromotionsController {
           searchFilters.pay.$lte = maxPay;
         }
       }
- 
+
       if (startDate || endDate) {
         searchFilters.startDate = {};
         if (startDate) {
@@ -73,7 +75,7 @@ export default class PromotionsController {
           searchFilters.startDate.$lte = new Date(endDate);
         }
       }
- 
+
       const promotionsList = await Promotion.find(searchFilters)
         .skip(offset)
         .limit(limit)
@@ -103,7 +105,7 @@ export default class PromotionsController {
         salesStallId,
         startDate,
         endDate,
-        pay
+        pay,
       });
 
       const savedPromotion = await newPromotion.save();
@@ -116,12 +118,17 @@ export default class PromotionsController {
 
   // Obtener una promoción por su ID
   static getPromotionById = async (req: Request, res: Response) => {
+    const { id } = req.params;
     try {
-      const { id } = req.params;
-      const promotion = await Promotion.findById(id);
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json(ApiResponse.errorResponse("El ID proporcionado no es válido", 400));
+        return;
+      }
 
+      const promotion = await Promotion.findById(id);
       if (!promotion) {
-        return res.status(404).json(ApiResponse.errorResponse("Promoción no encontrada", 404));
+        res.status(404).json(ApiResponse.errorResponse("Promoción no encontrada", 404));
+        return;
       }
 
       res.status(200).json(ApiResponse.successResponse("Promoción encontrada", promotion));
@@ -133,12 +140,24 @@ export default class PromotionsController {
 
   // Actualizar una promoción
   static updatePromotion = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { salesStallId, startDate, endDate, pay } = req.body;
     try {
-      const { id } = req.params; 
-      const updatedPromotion = await Promotion.findByIdAndUpdate(id, req.body, { new: true });
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json(ApiResponse.errorResponse("El ID proporcionado no es válido", 400));
+        return;
+      }
 
+      const updateData: any = {};
+      if (salesStallId) updateData.salesStallId = salesStallId;
+      if (startDate) updateData.startDate = startDate;
+      if (endDate) updateData.endDate = endDate;
+      if (pay !== undefined) updateData.pay = pay;
+
+      const updatedPromotion = await Promotion.findByIdAndUpdate(id, updateData, { new: true });
       if (!updatedPromotion) {
-        return res.status(404).json(ApiResponse.errorResponse("Promoción no encontrada", 404));
+        res.status(404).json(ApiResponse.errorResponse("Promoción no encontrada", 404));
+        return;
       }
 
       res.status(200).json(ApiResponse.successResponse("Promoción actualizada con éxito", updatedPromotion));
@@ -150,12 +169,17 @@ export default class PromotionsController {
 
   // Eliminar una promoción
   static deletePromotion = async (req: Request, res: Response) => {
+    const { id } = req.params;
     try {
-      const { id } = req.params;
-      const deletedPromotion = await Promotion.findByIdAndDelete(id);
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json(ApiResponse.errorResponse("El ID proporcionado no es válido", 400));
+        return;
+      }
 
+      const deletedPromotion = await Promotion.findByIdAndDelete(id);
       if (!deletedPromotion) {
-        return res.status(404).json(ApiResponse.errorResponse("Promoción no encontrada", 404));
+        res.status(404).json(ApiResponse.errorResponse("Promoción no encontrada", 404));
+        return;
       }
 
       res.status(200).json(ApiResponse.successResponse("Promoción eliminada con éxito", deletedPromotion));

@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import Category from "../models/categoryModel";
 import { ApiResponse } from "../utils/ApiResponse";
 import ParseQueryToNumber from "../utils/ParseQueryToNumber";
+import mongoose from "mongoose";
 
 export default class CategoryController {
 
@@ -15,7 +16,8 @@ export default class CategoryController {
       res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
     }
   };
-  
+
+  // Buscar categorías con paginación, filtros y ordenamiento
   static searchCategories = async (req: Request, res: Response) => {
     try {
       const page = ParseQueryToNumber(req.query.page as string, 1);
@@ -23,9 +25,7 @@ export default class CategoryController {
       const search = (req.query.search as string) || "";
       const sort = (req.query.sort as string) || "newest";
 
-      // Configurar opciones de ordenamiento
       let sortQuery = {};
-
       switch (sort) {
         case "newest":
           sortQuery = { creationDate: "desc" };
@@ -45,7 +45,6 @@ export default class CategoryController {
 
       const offset = (page - 1) * limit;
 
-      // Construir filtros de búsqueda
       const searchFilters: any = {
         name: { $regex: search, $options: "i" },
       };
@@ -64,8 +63,7 @@ export default class CategoryController {
         })
       );
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Ocurrió un error";
+      const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
       res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
     }
   };
@@ -75,10 +73,9 @@ export default class CategoryController {
     try {
       const { name, recommendedRate } = req.body;
 
-      // Crear una nueva categoría
       const newCategory = new Category({
         name,
-        recommendedRate
+        recommendedRate,
       });
 
       const savedCategory = await newCategory.save();
@@ -91,12 +88,17 @@ export default class CategoryController {
 
   // Obtener una categoría por su ID
   static getCategoryById = async (req: Request, res: Response) => {
+    const { id } = req.params;
     try {
-      const { id } = req.params; 
-      const category = await Category.findById(id);
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json(ApiResponse.errorResponse("El ID proporcionado no es válido", 400));
+        return;
+      }
 
+      const category = await Category.findById(id);
       if (!category) {
-        return res.status(404).json(ApiResponse.errorResponse("Categoría no encontrada", 404));
+        res.status(404).json(ApiResponse.errorResponse("Categoría no encontrada", 404));
+        return;
       }
 
       res.status(200).json(ApiResponse.successResponse("Categoría encontrada", category));
@@ -108,12 +110,22 @@ export default class CategoryController {
 
   // Actualizar una categoría
   static updateCategory = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { name, recommendedRate } = req.body;
     try {
-      const { id } = req.params; 
-      const updatedCategory = await Category.findByIdAndUpdate(id, req.body, { new: true });
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json(ApiResponse.errorResponse("El ID proporcionado no es válido", 400));
+        return;
+      }
 
+      const updateData: any = {};
+      if (name) updateData.name = name;
+      if (recommendedRate !== undefined) updateData.recommendedRate = recommendedRate;
+
+      const updatedCategory = await Category.findByIdAndUpdate(id, updateData, { new: true });
       if (!updatedCategory) {
-        return res.status(404).json(ApiResponse.errorResponse("Categoría no encontrada", 404));
+        res.status(404).json(ApiResponse.errorResponse("Categoría no encontrada", 404));
+        return;
       }
 
       res.status(200).json(ApiResponse.successResponse("Categoría actualizada con éxito", updatedCategory));
@@ -125,12 +137,17 @@ export default class CategoryController {
 
   // Eliminar una categoría
   static deleteCategory = async (req: Request, res: Response) => {
+    const { id } = req.params;
     try {
-      const { id } = req.params; 
-      const deletedCategory = await Category.findByIdAndDelete(id);
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json(ApiResponse.errorResponse("El ID proporcionado no es válido", 400));
+        return;
+      }
 
+      const deletedCategory = await Category.findByIdAndDelete(id);
       if (!deletedCategory) {
-        return res.status(404).json(ApiResponse.errorResponse("Categoría no encontrada", 404));
+        res.status(404).json(ApiResponse.errorResponse("Categoría no encontrada", 404));
+        return;
       }
 
       res.status(200).json(ApiResponse.successResponse("Categoría eliminada con éxito", deletedCategory));
