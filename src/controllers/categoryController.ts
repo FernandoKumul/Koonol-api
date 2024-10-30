@@ -1,6 +1,9 @@
 import { Request, Response } from "express";
 import Category from "../models/categoryModel";
 import { ApiResponse } from "../utils/ApiResponse";
+import ParseQueryToNumber from "../utils/ParseQueryToNumber";
+import mongoose from "mongoose";
+import Subcategory from "../models/subcategoryModel";
 
 export default class CategoryController {
 
@@ -15,18 +18,78 @@ export default class CategoryController {
     }
   };
 
+  // Buscar categorías con paginación, filtros y ordenamiento
+  static searchCategories = async (req: Request, res: Response) => {
+    try {
+      const page = ParseQueryToNumber(req.query.page as string, 1);
+      const limit = ParseQueryToNumber(req.query.limit as string, 10);
+      const search = (req.query.search as string) || "";
+      const sort = (req.query.sort as string) || "newest";
+
+      let sortQuery = {};
+      switch (sort) {
+        case "newest":
+          sortQuery = { creationDate: "desc" };
+          break;
+        case "oldest":
+          sortQuery = { creationDate: "asc" };
+          break;
+        case "a-z":
+          sortQuery = { name: "asc" };
+          break;
+        case "z-a":
+          sortQuery = { name: "desc" };
+          break;
+        default:
+          sortQuery = { creationDate: "desc" };
+      }
+
+      const offset = (page - 1) * limit;
+
+      const searchFilters: any = {
+        name: { $regex: search, $options: "i" },
+      };
+
+      const categoriesList = await Category.find(searchFilters)
+        .skip(offset)
+        .limit(limit)
+        .sort(sortQuery);
+
+      const totalCategories = await Category.countDocuments(searchFilters);
+
+      res.status(200).json(
+        ApiResponse.successResponse("Categorías encontradas", {
+          count: totalCategories,
+          results: categoriesList,
+        })
+      );
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
+      res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
+    }
+  };
+
   // Crear una nueva categoría
   static createCategory = async (req: Request, res: Response) => {
     try {
-      const { name, recommendedRate } = req.body;
+      const { name, recommendedRate, subcategories } = req.body;
 
-      // Crear una nueva categoría
       const newCategory = new Category({
         name,
-        recommendedRate
+        recommendedRate,
       });
 
       const savedCategory = await newCategory.save();
+
+      if (subcategories && subcategories.length > 0) {
+        const subcategoriesList = subcategories.map((subcategory: any) => ({
+          name: subcategory.name,
+          categoryId: savedCategory._id,
+        }));
+
+        await Subcategory.insertMany(subcategoriesList);
+      }
+
       res.status(201).json(ApiResponse.successResponse("Categoría creada con éxito", savedCategory));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
@@ -36,12 +99,17 @@ export default class CategoryController {
 
   // Obtener una categoría por su ID
   static getCategoryById = async (req: Request, res: Response) => {
+    const { id } = req.params;
     try {
-      const { id } = req.params; 
-      const category = await Category.findById(id);
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json(ApiResponse.errorResponse("El ID proporcionado no es válido", 400));
+        return;
+      }
 
+      const category = await Category.findById(id);
       if (!category) {
-        return res.status(404).json(ApiResponse.errorResponse("Categoría no encontrada", 404));
+        res.status(404).json(ApiResponse.errorResponse("Categoría no encontrada", 404));
+        return;
       }
 
       res.status(200).json(ApiResponse.successResponse("Categoría encontrada", category));
@@ -53,12 +121,22 @@ export default class CategoryController {
 
   // Actualizar una categoría
   static updateCategory = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { name, recommendedRate } = req.body;
     try {
-      const { id } = req.params; 
-      const updatedCategory = await Category.findByIdAndUpdate(id, req.body, { new: true });
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json(ApiResponse.errorResponse("El ID proporcionado no es válido", 400));
+        return;
+      }
 
+      const updateData: any = {};
+      if (name) updateData.name = name;
+      if (recommendedRate !== undefined) updateData.recommendedRate = recommendedRate;
+
+      const updatedCategory = await Category.findByIdAndUpdate(id, updateData, { new: true });
       if (!updatedCategory) {
-        return res.status(404).json(ApiResponse.errorResponse("Categoría no encontrada", 404));
+        res.status(404).json(ApiResponse.errorResponse("Categoría no encontrada", 404));
+        return;
       }
 
       res.status(200).json(ApiResponse.successResponse("Categoría actualizada con éxito", updatedCategory));
@@ -70,12 +148,19 @@ export default class CategoryController {
 
   // Eliminar una categoría
   static deleteCategory = async (req: Request, res: Response) => {
+    const { id } = req.params;
     try {
-      const { id } = req.params; 
-      const deletedCategory = await Category.findByIdAndDelete(id);
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json(ApiResponse.errorResponse("El ID proporcionado no es válido", 400));
+        return;
+      }
 
+      await Subcategory.deleteMany({ categoryId: id });
+
+      const deletedCategory = await Category.findByIdAndDelete(id);
       if (!deletedCategory) {
-        return res.status(404).json(ApiResponse.errorResponse("Categoría no encontrada", 404));
+        res.status(404).json(ApiResponse.errorResponse("Categoría no encontrada", 404));
+        return;
       }
 
       res.status(200).json(ApiResponse.successResponse("Categoría eliminada con éxito", deletedCategory));
