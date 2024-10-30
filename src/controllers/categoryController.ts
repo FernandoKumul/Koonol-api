@@ -3,6 +3,7 @@ import Category from "../models/categoryModel";
 import { ApiResponse } from "../utils/ApiResponse";
 import ParseQueryToNumber from "../utils/ParseQueryToNumber";
 import mongoose from "mongoose";
+import Subcategory from "../models/subcategoryModel";
 
 export default class CategoryController {
 
@@ -71,7 +72,7 @@ export default class CategoryController {
   // Crear una nueva categoría
   static createCategory = async (req: Request, res: Response) => {
     try {
-      const { name, recommendedRate } = req.body;
+      const { name, recommendedRate, subcategories } = req.body;
 
       const newCategory = new Category({
         name,
@@ -79,6 +80,16 @@ export default class CategoryController {
       });
 
       const savedCategory = await newCategory.save();
+
+      if (subcategories && subcategories.length > 0) {
+        const subcategoriesList = subcategories.map((subcategory: any) => ({
+          name: subcategory.name,
+          categoryId: savedCategory._id,
+        }));
+
+        await Subcategory.insertMany(subcategoriesList);
+      }
+
       res.status(201).json(ApiResponse.successResponse("Categoría creada con éxito", savedCategory));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
@@ -143,6 +154,8 @@ export default class CategoryController {
         res.status(400).json(ApiResponse.errorResponse("El ID proporcionado no es válido", 400));
         return;
       }
+
+      await Subcategory.deleteMany({ categoryId: id });
 
       const deletedCategory = await Category.findByIdAndDelete(id);
       if (!deletedCategory) {

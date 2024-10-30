@@ -137,7 +137,7 @@ export default class SellersController {
       if (name) updateData.name = name.trim();
       if (lastName) updateData.lastName = lastName.trim();
       if (email !== undefined) updateData.email = email ? email.trim() : null;
-      if (photo) updateData.photo = photo;
+      if (photo !== undefined) updateData.photo = photo ? photo : null;
       if (birthday) updateData.birthday = birthday;
       if (gender) updateData.gender = gender;
       if (phoneNumber !== undefined) updateData.phoneNumber = phoneNumber;
