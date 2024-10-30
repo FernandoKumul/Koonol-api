@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import LocationSalesStalls from "../models/locationSalesStallsModel";
 import { ApiResponse } from "../utils/ApiResponse";
+import mongoose from "mongoose";
 
 export default class LocationSalesStallsController {
 
@@ -23,7 +24,7 @@ export default class LocationSalesStallsController {
       const newLocationSalesStalls = new LocationSalesStalls({
         salesStallsId,
         tianguisId,
-        markerMap
+        markerMap,
       });
 
       const savedLocation = await newLocationSalesStalls.save();
@@ -34,14 +35,19 @@ export default class LocationSalesStallsController {
     }
   };
 
-  // Obtener un registro por su ID
+  // Obtener un registro de LocationSalesStalls por su ID
   static getLocationSalesStallsById = async (req: Request, res: Response) => {
+    const { id } = req.params;
     try {
-      const { id } = req.params; 
-      const locationSalesStalls = await LocationSalesStalls.findById(id);
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json(ApiResponse.errorResponse("El ID proporcionado no es válido", 400));
+        return;
+      }
 
+      const locationSalesStalls = await LocationSalesStalls.findById(id);
       if (!locationSalesStalls) {
-        return res.status(404).json(ApiResponse.errorResponse("Ubicación de puesto de ventas no encontrada", 404));
+        res.status(404).json(ApiResponse.errorResponse("Ubicación de puesto de ventas no encontrada", 404));
+        return;
       }
 
       res.status(200).json(ApiResponse.successResponse("Ubicación de puesto de ventas encontrada", locationSalesStalls));
@@ -53,15 +59,26 @@ export default class LocationSalesStallsController {
 
   // Actualizar un registro de LocationSalesStalls
   static updateLocationSalesStalls = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { salesStallsId, tianguisId, markerMap } = req.body;
     try {
-      const { id } = req.params;
-      const updatedLocation = await LocationSalesStalls.findByIdAndUpdate(id, req.body, { new: true });
-
-      if (!updatedLocation) {
-        return res.status(404).json(ApiResponse.errorResponse("Ubicación de puesto de ventas no encontrada", 404));
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json(ApiResponse.errorResponse("El ID proporcionado no es válido", 400));
+        return;
       }
 
-      res.status(200).json(ApiResponse.successResponse("Ubicación de puesto de ventas actualizada con éxito", updatedLocation));
+      const updateData: any = {};
+      if (salesStallsId) updateData.salesStallsId = salesStallsId;
+      if (tianguisId) updateData.tianguisId = tianguisId;
+      if (markerMap) updateData.markerMap = markerMap;
+
+      const updatedLocationSalesStalls = await LocationSalesStalls.findByIdAndUpdate(id, updateData, { new: true });
+      if (!updatedLocationSalesStalls) {
+        res.status(404).json(ApiResponse.errorResponse("Ubicación de puesto de ventas no encontrada", 404));
+        return;
+      }
+
+      res.status(200).json(ApiResponse.successResponse("Ubicación de puesto de ventas actualizada con éxito", updatedLocationSalesStalls));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
       res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
@@ -70,15 +87,20 @@ export default class LocationSalesStallsController {
 
   // Eliminar un registro de LocationSalesStalls
   static deleteLocationSalesStalls = async (req: Request, res: Response) => {
+    const { id } = req.params;
     try {
-      const { id } = req.params;
-      const deletedLocation = await LocationSalesStalls.findByIdAndDelete(id);
-
-      if (!deletedLocation) {
-        return res.status(404).json(ApiResponse.errorResponse("Ubicación de puesto de ventas no encontrada", 404));
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json(ApiResponse.errorResponse("El ID proporcionado no es válido", 400));
+        return;
       }
 
-      res.status(200).json(ApiResponse.successResponse("Ubicación de puesto de ventas eliminada con éxito", deletedLocation));
+      const deletedLocationSalesStalls = await LocationSalesStalls.findByIdAndDelete(id);
+      if (!deletedLocationSalesStalls) {
+        res.status(404).json(ApiResponse.errorResponse("Ubicación de puesto de ventas no encontrada", 404));
+        return;
+      }
+
+      res.status(200).json(ApiResponse.successResponse("Ubicación de puesto de ventas eliminada con éxito", deletedLocationSalesStalls));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
       res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));

@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import Tianguis from "../models/tianguisModel";
 import ParseQueryToNumber from "../utils/ParseQueryToNumber";
 import { ApiResponse } from "../utils/ApiResponse";
+import mongoose from "mongoose";
 
 export default class TianguisController {
 
@@ -16,6 +17,7 @@ export default class TianguisController {
     }
   };
 
+  // Buscar tianguis con filtros, paginación y ordenamiento
   static searchTianguis = async (req: Request, res: Response) => {
     try {
       const page = ParseQueryToNumber(req.query.page as string, 1);
@@ -27,7 +29,6 @@ export default class TianguisController {
       const userId = req.query.userId as string;
 
       let sortQuery = {};
-
       switch (sort) {
         case "newest":
           sortQuery = { creationDate: "desc" };
@@ -46,7 +47,6 @@ export default class TianguisController {
       }
 
       const offset = (page - 1) * limit;
-
       const searchFilters: any = {
         $or: [
           { name: { $regex: search, $options: "i" } },
@@ -58,11 +58,9 @@ export default class TianguisController {
       if (active !== undefined) {
         searchFilters.active = active;
       }
-
       if (dayWeek) {
         searchFilters.dayWeek = dayWeek;
       }
-
       if (userId) {
         searchFilters.userId = userId;
       }
@@ -81,8 +79,7 @@ export default class TianguisController {
         })
       );
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Ocurrió un error";
+      const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
       res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
     }
   };
@@ -102,7 +99,7 @@ export default class TianguisController {
         startTime,
         endTime,
         locality,
-        active
+        active,
       });
       const savedTianguis = await newTianguis.save();
       res.status(201).json(ApiResponse.successResponse("Tianguis creado con éxito", savedTianguis));
@@ -112,13 +109,21 @@ export default class TianguisController {
     }
   };
 
-  // Obtener un tianguis por ID
+  // Obtener un tianguis por su ID
   static getTianguisById = async (req: Request, res: Response) => {
+    const { id } = req.params;
     try {
-      const tianguis = await Tianguis.findById(req.params.id);
-      if (!tianguis) {
-        return res.status(404).json(ApiResponse.errorResponse("Tianguis no encontrado", 404));
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json(ApiResponse.errorResponse("El ID proporcionado no es válido", 400));
+        return;
       }
+
+      const tianguis = await Tianguis.findById(id);
+      if (!tianguis) {
+        res.status(404).json(ApiResponse.errorResponse("Tianguis no encontrado", 404));
+        return;
+      }
+
       res.status(200).json(ApiResponse.successResponse("Tianguis encontrado", tianguis));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
@@ -128,11 +133,33 @@ export default class TianguisController {
 
   // Actualizar un tianguis
   static updateTianguis = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { userId, name, color, dayWeek, photo, indications, markerMap, startTime, endTime, locality, active } = req.body;
     try {
-      const updatedTianguis = await Tianguis.findByIdAndUpdate(req.params.id, req.body, { new: true });
-      if (!updatedTianguis) {
-        return res.status(404).json(ApiResponse.errorResponse("Tianguis no encontrado", 404));
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json(ApiResponse.errorResponse("El ID proporcionado no es válido", 400));
+        return;
       }
+
+      const updateData: any = {};
+      if (userId) updateData.userId = userId;
+      if (name) updateData.name = name;
+      if (color) updateData.color = color;
+      if (dayWeek) updateData.dayWeek = dayWeek;
+      if (photo) updateData.photo = photo;
+      if (indications) updateData.indications = indications;
+      if (markerMap) updateData.markerMap = markerMap;
+      if (startTime) updateData.startTime = startTime;
+      if (endTime) updateData.endTime = endTime;
+      if (locality) updateData.locality = locality;
+      if (active !== undefined) updateData.active = active;
+
+      const updatedTianguis = await Tianguis.findByIdAndUpdate(id, updateData, { new: true });
+      if (!updatedTianguis) {
+        res.status(404).json(ApiResponse.errorResponse("Tianguis no encontrado", 404));
+        return;
+      }
+
       res.status(200).json(ApiResponse.successResponse("Tianguis actualizado con éxito", updatedTianguis));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
@@ -142,11 +169,19 @@ export default class TianguisController {
 
   // Eliminar un tianguis
   static deleteTianguis = async (req: Request, res: Response) => {
+    const { id } = req.params;
     try {
-      const deletedTianguis = await Tianguis.findByIdAndDelete(req.params.id);
-      if (!deletedTianguis) {
-        return res.status(404).json(ApiResponse.errorResponse("Tianguis no encontrado", 404));
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json(ApiResponse.errorResponse("El ID proporcionado no es válido", 400));
+        return;
       }
+
+      const deletedTianguis = await Tianguis.findByIdAndDelete(id);
+      if (!deletedTianguis) {
+        res.status(404).json(ApiResponse.errorResponse("Tianguis no encontrado", 404));
+        return;
+      }
+
       res.status(200).json(ApiResponse.successResponse("Tianguis eliminado con éxito", deletedTianguis));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";

@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import Assistance from "../models/assistanceModel";
 import { ApiResponse } from "../utils/ApiResponse";
+import mongoose from "mongoose";
 
 export default class AssistanceController {
 
@@ -36,12 +37,17 @@ export default class AssistanceController {
 
   // Obtener una asistencia por su ID
   static getAssistanceById = async (req: Request, res: Response) => {
+    const { id } = req.params;
     try {
-      const { id } = req.params; 
-      const assistance = await Assistance.findById(id);
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json(ApiResponse.errorResponse("El ID proporcionado no es válido", 400));
+        return;
+      }
 
+      const assistance = await Assistance.findById(id);
       if (!assistance) {
-        return res.status(404).json(ApiResponse.errorResponse("Asistencia no encontrada", 404));
+        res.status(404).json(ApiResponse.errorResponse("Asistencia no encontrada", 404));
+        return;
       }
 
       res.status(200).json(ApiResponse.successResponse("Asistencia encontrada", assistance));
@@ -53,12 +59,23 @@ export default class AssistanceController {
 
   // Actualizar una asistencia
   static updateAssistance = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { locationSalesStallsId, status, tariff } = req.body;
     try {
-      const { id } = req.params; 
-      const updatedAssistance = await Assistance.findByIdAndUpdate(id, req.body, { new: true });
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json(ApiResponse.errorResponse("El ID proporcionado no es válido", 400));
+        return;
+      }
 
+      const updateData: any = {};
+      if (locationSalesStallsId) updateData.locationSalesStallsId = locationSalesStallsId;
+      if (typeof status !== 'undefined') updateData.status = status; // Verifica el tipo booleano
+      if (tariff) updateData.tariff = tariff;
+
+      const updatedAssistance = await Assistance.findByIdAndUpdate(id, updateData, { new: true });
       if (!updatedAssistance) {
-        return res.status(404).json(ApiResponse.errorResponse("Asistencia no encontrada", 404));
+        res.status(404).json(ApiResponse.errorResponse("Asistencia no encontrada", 404));
+        return;
       }
 
       res.status(200).json(ApiResponse.successResponse("Asistencia actualizada con éxito", updatedAssistance));
@@ -70,12 +87,17 @@ export default class AssistanceController {
 
   // Eliminar una asistencia
   static deleteAssistance = async (req: Request, res: Response) => {
+    const { id } = req.params;
     try {
-      const { id } = req.params;
-      const deletedAssistance = await Assistance.findByIdAndDelete(id);
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json(ApiResponse.errorResponse("El ID proporcionado no es válido", 400));
+        return;
+      }
 
+      const deletedAssistance = await Assistance.findByIdAndDelete(id);
       if (!deletedAssistance) {
-        return res.status(404).json(ApiResponse.errorResponse("Asistencia no encontrada", 404));
+        res.status(404).json(ApiResponse.errorResponse("Asistencia no encontrada", 404));
+        return;
       }
 
       res.status(200).json(ApiResponse.successResponse("Asistencia eliminada con éxito", deletedAssistance));

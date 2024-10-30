@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import SalesStalls from "../models/salesStallsModel";
 import { ApiResponse } from "../utils/ApiResponse";
 import ParseQueryToNumber from "../utils/ParseQueryToNumber";
+import mongoose from "mongoose";
 
 export default class SalesStallsController {
 
@@ -16,6 +17,7 @@ export default class SalesStallsController {
     }
   };
 
+  // Buscar puestos de ventas con paginación, filtros y ordenamiento
   static searchSalesStalls = async (req: Request, res: Response) => {
     try {
       const page = ParseQueryToNumber(req.query.page as string, 1);
@@ -28,9 +30,7 @@ export default class SalesStallsController {
       const sellerId = req.query.sellerId as string;
       const subCategoryId = req.query.subCategoryId as string;
 
-      // Configure sorting options
       let sortQuery: any = {};
-
       switch (sort) {
         case "newest":
           sortQuery = { creationDate: "desc" };
@@ -49,35 +49,29 @@ export default class SalesStallsController {
       }
 
       const offset = (page - 1) * limit;
- 
       const searchFilters: any = {
         $or: [
           { name: { $regex: search, $options: "i" } },
           { description: { $regex: search, $options: "i" } },
         ],
       };
- 
+
       if (active !== undefined) {
         searchFilters.active = active;
       }
-
       if (probation !== undefined) {
         searchFilters.probation = probation;
       }
-
       if (type) {
         searchFilters.type = type;
       }
-
       if (sellerId) {
         searchFilters.sellerId = sellerId;
       }
-
       if (subCategoryId) {
         searchFilters.subCategoryId = subCategoryId;
       }
 
-      // Execute the query
       const salesStallsList = await SalesStalls.find(searchFilters)
         .skip(offset)
         .limit(limit)
@@ -111,7 +105,7 @@ export default class SalesStallsController {
         description,
         type,
         probation,
-        active
+        active,
       });
 
       const savedSalesStalls = await newSalesStalls.save();
@@ -123,16 +117,21 @@ export default class SalesStallsController {
   };
 
   // Obtener un puesto de ventas por su ID
-  static getSalesStallsById = async (req: Request, res: Response) => {
+  static getSalesStallById = async (req: Request, res: Response) => {
+    const { id } = req.params;
     try {
-      const { id } = req.params;
-      const salesStalls = await SalesStalls.findById(id);
-
-      if (!salesStalls) {
-        return res.status(404).json(ApiResponse.errorResponse("Puesto de ventas no encontrado", 404));
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json(ApiResponse.errorResponse("El ID proporcionado no es válido", 400));
+        return;
       }
 
-      res.status(200).json(ApiResponse.successResponse("Puesto de ventas encontrado", salesStalls));
+      const salesStall = await SalesStalls.findById(id);
+      if (!salesStall) {
+        res.status(404).json(ApiResponse.errorResponse("Puesto de ventas no encontrado", 404));
+        return;
+      }
+
+      res.status(200).json(ApiResponse.successResponse("Puesto de ventas encontrado", salesStall));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
       res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
@@ -140,16 +139,32 @@ export default class SalesStallsController {
   };
 
   // Actualizar un puesto de ventas
-  static updateSalesStalls = async (req: Request, res: Response) => {
+  static updateSalesStall = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { sellerId, subCategoryId, name, photos, description, type, probation, active } = req.body;
     try {
-      const { id } = req.params; 
-      const updatedSalesStalls = await SalesStalls.findByIdAndUpdate(id, req.body, { new: true });
-
-      if (!updatedSalesStalls) {
-        return res.status(404).json(ApiResponse.errorResponse("Puesto de ventas no encontrado", 404));
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json(ApiResponse.errorResponse("El ID proporcionado no es válido", 400));
+        return;
       }
 
-      res.status(200).json(ApiResponse.successResponse("Puesto de ventas actualizado con éxito", updatedSalesStalls));
+      const updateData: any = {};
+      if (sellerId) updateData.sellerId = sellerId;
+      if (subCategoryId) updateData.subCategoryId = subCategoryId;
+      if (name) updateData.name = name;
+      if (photos) updateData.photos = photos;
+      if (description) updateData.description = description;
+      if (type) updateData.type = type;
+      if (probation !== undefined) updateData.probation = probation;
+      if (active !== undefined) updateData.active = active;
+
+      const updatedSalesStall = await SalesStalls.findByIdAndUpdate(id, updateData, { new: true });
+      if (!updatedSalesStall) {
+        res.status(404).json(ApiResponse.errorResponse("Puesto de ventas no encontrado", 404));
+        return;
+      }
+
+      res.status(200).json(ApiResponse.successResponse("Puesto de ventas actualizado con éxito", updatedSalesStall));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
       res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
@@ -157,16 +172,21 @@ export default class SalesStallsController {
   };
 
   // Eliminar un puesto de ventas
-  static deleteSalesStalls = async (req: Request, res: Response) => {
+  static deleteSalesStall = async (req: Request, res: Response) => {
+    const { id } = req.params;
     try {
-      const { id } = req.params;
-      const deletedSalesStalls = await SalesStalls.findByIdAndDelete(id);
-
-      if (!deletedSalesStalls) {
-        return res.status(404).json(ApiResponse.errorResponse("Puesto de ventas no encontrado", 404));
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json(ApiResponse.errorResponse("El ID proporcionado no es válido", 400));
+        return;
       }
 
-      res.status(200).json(ApiResponse.successResponse("Puesto de ventas eliminado con éxito", deletedSalesStalls));
+      const deletedSalesStall = await SalesStalls.findByIdAndDelete(id);
+      if (!deletedSalesStall) {
+        res.status(404).json(ApiResponse.errorResponse("Puesto de ventas no encontrado", 404));
+        return;
+      }
+
+      res.status(200).json(ApiResponse.successResponse("Puesto de ventas eliminado con éxito", deletedSalesStall));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
       res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
