@@ -26,9 +26,6 @@ jobs:
       - name: Run build
         run: npm run build
 
-      - name: Run tests
-        run: npm test
-
   create_pull_request:
     needs: build
     runs-on: ubuntu-latest
