@@ -1,0 +1,46 @@
+name: Dev to Main Merge
+
+on:
+  push:
+    branches:
+      - dev
+
+permissions:
+  contents: write  # Permisos de escritura necesarios para crear el pull request
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run build
+        run: npm run build
+
+      - name: Run tests
+        run: npm test
+
+  create_pull_request:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Create Pull Request to main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.email "raulmay8@hotmail.com"
+          git config --global user.name "raul"
+          gh pr create --title "PR automático de dev a main" --body "Compilación exitosa, fusionando cambios." --base main --head dev
+
