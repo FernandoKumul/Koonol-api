@@ -6,9 +6,9 @@ import { salesStallsUpdateSchema } from "../schemas/SalesStallsSchema/salesStall
 
 const router = express.Router();
 
-router.get('/', SalesStallsController.getAllSalesStalls);
+router.get('/all', SalesStallsController.getAllSalesStalls);
 router.post('/', validateData(salesStallsSchema), SalesStallsController.createSalesStalls);
-router.get('/all', SalesStallsController.searchSalesStalls);
+router.get('/', SalesStallsController.searchSalesStalls);
 router.get('/:id', SalesStallsController.getSalesStallById);
 router.put('/:id', validateData(salesStallsUpdateSchema), SalesStallsController.updateSalesStall);
 router.delete('/:id', SalesStallsController.deleteSalesStall);
