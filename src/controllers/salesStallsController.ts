@@ -73,6 +73,7 @@ export default class SalesStallsController {
       }
 
       const salesStallsList = await SalesStalls.find(searchFilters)
+        .populate("subCategoryId")
         .skip(offset)
         .limit(limit)
         .sort(sortQuery);
