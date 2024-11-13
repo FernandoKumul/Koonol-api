@@ -126,7 +126,7 @@ export default class SalesStallsController {
         return;
       }
 
-      const salesStall = await SalesStalls.findById(id).populate("subCategoryId");
+      const salesStall = await SalesStalls.findById(id).populate("subCategoryId").populate("sellerId");
       if (!salesStall) {
         res.status(404).json(ApiResponse.errorResponse("Puesto de ventas no encontrado", 404));
         return;
