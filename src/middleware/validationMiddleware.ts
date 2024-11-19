@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { z, ZodError } from 'zod';
 import { ApiResponse } from '../utils/ApiResponse';
-import { IErrorMessage } from '../interfaces/IErrorMessage';
+import { IErrorMessage } from '../interfaces/ILog';
 
 export function validateData(schema: z.ZodObject<any, any>) {
   return (req: Request, res: Response, next: NextFunction) => {
