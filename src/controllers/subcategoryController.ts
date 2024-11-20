@@ -8,7 +8,7 @@ export default class SubCategoryController {
   // Obtener todas las subcategorías
   static getAllSubcategories = async (req: Request, res: Response) => {
     try {
-      const subCategories = await Subcategory.find();
+      const subCategories = await Subcategory.find().populate('categoryId');
       res.status(200).json(ApiResponse.successResponse("Subcategorías encontradas", subCategories));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";

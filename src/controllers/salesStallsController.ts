@@ -73,7 +73,8 @@ export default class SalesStallsController {
       }
 
       const salesStallsList = await SalesStalls.find(searchFilters)
-        .populate("subCategoryId")
+        .populate({ path: "subCategoryId", populate: { path: "categoryId" } })
+        .populate("sellerId")
         .skip(offset)
         .limit(limit)
         .sort(sortQuery);
@@ -126,7 +127,7 @@ export default class SalesStallsController {
         return;
       }
 
-      const salesStall = await SalesStalls.findById(id).populate("subCategoryId").populate("sellerId");
+      const salesStall = await SalesStalls.findById(id).populate({ path: "subCategoryId", populate: { path: "categoryId" } }).populate("sellerId");
       if (!salesStall) {
         res.status(404).json(ApiResponse.errorResponse("Puesto de ventas no encontrado", 404));
         return;
