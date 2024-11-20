@@ -1,6 +1,24 @@
 import crypto from "crypto";
+import dotenv from "dotenv";
 
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || crypto.randomBytes(32).toString("hex");
+// Carga las variables de entorno desde el archivo .env
+dotenv.config();
+
+const generateEncryptionKey = (): string => {
+  if (!process.env.ENCRYPTION_KEY) {
+    console.warn("ENCRYPTION_KEY no definido. Generando una clave temporal...");
+    return crypto.randomBytes(32).toString("hex"); // Genera una clave de 32 bytes en formato hexadecimal
+  }
+
+  const key = process.env.ENCRYPTION_KEY.trim();
+  if (key.length !== 64) {
+    throw new Error("ENCRYPTION_KEY debe tener exactamente 64 caracteres (32 bytes en formato hexadecimal).");
+  }
+
+  return key;
+};
+
+const ENCRYPTION_KEY = generateEncryptionKey();
 const IV_LENGTH = 16;
 
 // Función para cifrar datos
