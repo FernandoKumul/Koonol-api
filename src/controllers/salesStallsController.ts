@@ -111,7 +111,7 @@ export default class SalesStallsController {
       });
 
       const savedSalesStalls = await newSalesStalls.save();
-      res.status(201).json(ApiResponse.successResponse("Puesto de ventas creado con éxito", savedSalesStalls));
+      res.status(201).json(ApiResponse.successResponse("Puesto de ventas creado con éxito", savedSalesStalls.name));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
       res.status(400).json(ApiResponse.errorResponse(errorMessage));
@@ -166,7 +166,7 @@ export default class SalesStallsController {
         return;
       }
 
-      res.status(200).json(ApiResponse.successResponse("Puesto de ventas actualizado con éxito", updatedSalesStall));
+      res.status(200).json(ApiResponse.successResponse("Puesto de ventas actualizado con éxito", updatedSalesStall.id));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
       res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
@@ -188,7 +188,7 @@ export default class SalesStallsController {
         return;
       }
 
-      res.status(200).json(ApiResponse.successResponse("Puesto de ventas eliminado con éxito", deletedSalesStall));
+      res.status(200).json(ApiResponse.successResponse("Puesto de ventas eliminado con éxito", deletedSalesStall.id));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
       res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
