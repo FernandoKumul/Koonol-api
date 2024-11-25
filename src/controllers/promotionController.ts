@@ -30,8 +30,6 @@ export default class PromotionsController {
       const startDate = req.query.startDate as string;
       const endDate = req.query.endDate as string;
 
-      console.log(minPay, maxPay);
-
       let sortQuery: any = {};
 
       switch (sort) {
