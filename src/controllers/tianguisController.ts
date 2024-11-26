@@ -76,8 +76,10 @@ export default class TianguisController {
         ApiResponse.successResponse("Tianguis encontrados", {
           count: totalTianguis,
           results: tianguisList,
+          hasNextPage: offset + tianguisList.length < totalTianguis
         })
       );
+
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
       res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));

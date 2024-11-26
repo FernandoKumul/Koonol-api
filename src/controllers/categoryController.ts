@@ -3,7 +3,8 @@ import Category from "../models/categoryModel";
 import { ApiResponse } from "../utils/ApiResponse";
 import ParseQueryToNumber from "../utils/ParseQueryToNumber";
 import mongoose from "mongoose";
-import Subcategory from "../models/subcategoryModel";
+import Subcategory, { ISubcategoryModel } from "../models/subcategoryModel";
+import { ISubcategory } from "../interfaces/ISubcategory";
 
 export default class CategoryController {
 
@@ -90,7 +91,10 @@ export default class CategoryController {
         await Subcategory.insertMany(subcategoriesList);
       }
 
-      res.status(201).json(ApiResponse.successResponse("Categoría creada con éxito", savedCategory));
+      const subCategories = await Subcategory.find({ categoryId: savedCategory._id });
+      const populatedCategory = { ...savedCategory.toObject(), subCategories: subCategories };
+
+      res.status(201).json(ApiResponse.successResponse("Categoría creada con éxito", populatedCategory));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
       res.status(400).json(ApiResponse.errorResponse(errorMessage));
@@ -112,7 +116,11 @@ export default class CategoryController {
         return;
       }
 
-      res.status(200).json(ApiResponse.successResponse("Categoría encontrada", category));
+      const subcategories = await Subcategory.find({ categoryId: category._id }).sort({ creationDate: "desc" });
+
+      const categoryWithSubcategories = { ...category.toObject(), subcategories: subcategories };
+
+      res.status(200).json(ApiResponse.successResponse("Categoría encontrada", categoryWithSubcategories));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
       res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
@@ -122,7 +130,9 @@ export default class CategoryController {
   // Actualizar una categoría
   static updateCategory = async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { name, recommendedRate } = req.body;
+    const { name, recommendedRate} = req.body;
+    const subcategories: ISubcategoryModel[] = req.body.subcategories || [];
+    
     try {
       if (!mongoose.Types.ObjectId.isValid(id)) {
         res.status(400).json(ApiResponse.errorResponse("El ID proporcionado no es válido", 400));
@@ -134,12 +144,33 @@ export default class CategoryController {
       if (recommendedRate !== undefined) updateData.recommendedRate = recommendedRate;
 
       const updatedCategory = await Category.findByIdAndUpdate(id, updateData, { new: true });
+
       if (!updatedCategory) {
         res.status(404).json(ApiResponse.errorResponse("Categoría no encontrada", 404));
         return;
       }
 
-      res.status(200).json(ApiResponse.successResponse("Categoría actualizada con éxito", updatedCategory));
+      const subCategoriesOriginal = await Subcategory.find({ categoryId: id });
+      const subCategoriesDelete = subCategoriesOriginal.filter(subcategory => !subcategories.some(sub => sub._id === subcategory.id));
+
+      if (subCategoriesDelete.length > 0) {
+        await Subcategory.deleteMany({ _id: { $in: subCategoriesDelete.map(subcategory => subcategory.id) } });
+      }
+
+      for (const subcategory of subcategories) {
+        if (subCategoriesOriginal.some(sub => sub.id === subcategory._id)) {
+          await Subcategory.findByIdAndUpdate(subcategory._id, { name: subcategory.name });
+        } else {
+          await Subcategory.create({ name: subcategory.name, categoryId: id });
+        }    
+      }
+
+      const subCategories = await Subcategory.find({ categoryId: updatedCategory._id });
+      const populatedCategory = { ...updatedCategory.toObject(), subCategories: subCategories };
+
+      console.log("Hasta aquí")
+
+      res.status(200).json(ApiResponse.successResponse("Categoría actualizada con éxito", populatedCategory));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
       res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
@@ -162,6 +193,8 @@ export default class CategoryController {
         res.status(404).json(ApiResponse.errorResponse("Categoría no encontrada", 404));
         return;
       }
+
+      await Subcategory.deleteMany({ categoryId: id });
 
       res.status(200).json(ApiResponse.successResponse("Categoría eliminada con éxito", deletedCategory));
     } catch (error) {
