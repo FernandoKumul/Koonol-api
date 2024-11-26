@@ -194,4 +194,15 @@ export default class SalesStallsController {
       res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
     }
   };
+
+  // Obtener todos los puestos de ventas
+  static getAllSalesStallsOnlyName = async (req: Request, res: Response) => {
+    try {
+      const salesStalls = await SalesStalls.find({}, { name: 1 });
+      res.status(200).json(ApiResponse.successResponse("Puestos de ventas encontrados", salesStalls));
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
+      res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
+    }
+  };
 }
