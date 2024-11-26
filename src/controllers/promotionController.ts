@@ -22,6 +22,7 @@ export default class PromotionsController {
     try {
       const page = ParseQueryToNumber(req.query.page as string, 1);
       const limit = ParseQueryToNumber(req.query.limit as string, 10);
+      const search = (req.query.search as string) || "";
       const sort = (req.query.sort as string) || "newest";
       const salesStallId = req.query.salesStallId as string;
       const minPay = req.query.minPay ? parseFloat(req.query.minPay as string) : undefined;
@@ -33,19 +34,19 @@ export default class PromotionsController {
 
       switch (sort) {
         case "newest":
-          sortQuery = { creationDate: "desc" };
+          sortQuery = { creationDate: -1 };
           break;
         case "oldest":
-          sortQuery = { creationDate: "asc" };
+          sortQuery = { creationDate: 1 };
           break;
         case "pay-asc":
-          sortQuery = { pay: "asc" };
+          sortQuery = { pay: 1 };
           break;
         case "pay-desc":
-          sortQuery = { pay: "desc" };
+          sortQuery = { pay: -1 };
           break;
         default:
-          sortQuery = { creationDate: "desc" };
+          sortQuery = { creationDate: -1 };
       }
 
       const offset = (page - 1) * limit;
@@ -76,17 +77,51 @@ export default class PromotionsController {
         }
       }
 
-      const promotionsList = await Promotion.find(searchFilters)
-        .skip(offset)
-        .limit(limit)
-        .sort(sortQuery);
-
-      const totalPromotions = await Promotion.countDocuments(searchFilters);
-
+      const promotionsList = await Promotion
+        .aggregate([
+          {
+            $lookup: {
+              from: "salesstalls",
+              localField: "salesStallId",
+              foreignField: "_id",
+              as: "salesStall",
+            },
+          },
+          {
+            $match: {
+              $and: [
+                { "salesStall.name": { $regex: search, $options: "i" } },
+                searchFilters,
+              ],
+            },
+          },
+          { $unwind: "$salesStall" },
+          {
+            $facet: {
+              data: [
+                {
+                  $project: {
+                    "salesStall._id": 1,
+                    "salesStall.name": 1,
+                    startDate: 1,
+                    endDate: 1,
+                    pay: 1,
+                    creationDate: 1,
+                  },
+                },
+                { $sort: sortQuery },
+                { $skip: offset },
+                { $limit: limit },
+              ],
+              totalPromotions: [{ $count: "count" }],
+            }
+          }
+        ])
+      
       res.status(200).json(
         ApiResponse.successResponse("Promociones encontradas", {
-          count: totalPromotions,
-          results: promotionsList,
+          count: promotionsList[0].totalPromotions[0]?.count || 0,
+          results: promotionsList[0].data,
         })
       );
     } catch (error) {
@@ -100,7 +135,7 @@ export default class PromotionsController {
   static createPromotion = async (req: Request, res: Response) => {
     try {
       const { salesStallId, startDate, endDate, pay } = req.body;
-      
+
       const newPromotion = new Promotion({
         salesStallId,
         startDate,
@@ -125,7 +160,7 @@ export default class PromotionsController {
         return;
       }
 
-      const promotion = await Promotion.findById(id);
+      const promotion = await Promotion.findById(id).populate({ path: "salesStallId", select: "name" });
       if (!promotion) {
         res.status(404).json(ApiResponse.errorResponse("Promoción no encontrada", 404));
         return;
