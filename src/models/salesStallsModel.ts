@@ -9,7 +9,7 @@ const salesStallsSchema: Schema = new Schema({
   name: { type: String, required: true },      
   photos: { type: [String], required: true },   
   description: { type: String, required: true },
-  type: { type: String, required: true },       
+  type: { type: Boolean, required: true },       
   probation: { type: Boolean, required: true },  
   active: { type: Boolean, required: true },     
   creationDate: { type: Date, default: Date.now },
