@@ -10,9 +10,13 @@ export const tianguisSchema = z.object({
   
   // `markerMap` es un objeto que representa un punto geoespacial
   markerMap: z.object({
-    type: z.literal("Point"), // Solo permitimos el tipo "Point" para GeoJSON
-    coordinates: z.tuple([z.number(), z.number()]) // Array de dos números [longitud, latitud]
+    type: z.literal("Point"),
+    coordinates: z.tuple([
+      z.number().min(-180).max(180), // Longitud
+      z.number().min(-90).max(90),  // Latitud
+    ]),
   }),
+  
   startTime: z.string().min(1, "La hora de inicio es requerida"),
   endTime: z.string().min(1, "La hora de finalización es requerida"),
   locality: z.string().min(1, "La localidad es requerida"),
