@@ -9,6 +9,7 @@ const router = express.Router();
 
 router.get('/all', SalesStallsController.getAllSalesStalls);
 router.get('/only-names', authMiddleware, SalesStallsController.getAllSalesStallsOnlyName);
+router.get('/search-public', SalesStallsController.searchPublicSalesStalls);
 router.post('/', validateData(salesStallsSchema), SalesStallsController.createSalesStalls);
 router.get('/', SalesStallsController.searchSalesStalls);
 router.get('/:id', SalesStallsController.getSalesStallById);
