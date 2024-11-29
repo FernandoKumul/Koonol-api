@@ -3,19 +3,21 @@ import Tianguis from "../models/tianguisModel";
 import ParseQueryToNumber from "../utils/ParseQueryToNumber";
 import { ApiResponse } from "../utils/ApiResponse";
 import mongoose from "mongoose";
+import ScheduleTianguis from "../models/scheduleTianguisModel";
 
 export default class TianguisController {
 
   // Obtener todos los tianguis
   static getTianguis = async (req: Request, res: Response) => {
     try {
-      const tianguis = await Tianguis.find();
+      const tianguis = await Tianguis.find().populate("schedule"); // Usar el campo virtual definido
       res.status(200).json(ApiResponse.successResponse("Tianguis encontrados", tianguis));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
       res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
     }
   };
+  
 
   // Buscar tianguis con filtros, paginación y ordenamiento
   static searchTianguis = async (req: Request, res: Response) => {
@@ -85,34 +87,9 @@ export default class TianguisController {
       res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
     }
   };
-  
-  // Crear un nuevo tianguis
-  static createTianguis = async (req: Request, res: Response) => {
-    try {
-      const { userId, name, color, dayWeek, photo, indications, markerMap, startTime, endTime, locality, active } = req.body;
-      const newTianguis = new Tianguis({
-        userId,
-        name,
-        color,
-        dayWeek,
-        photo,
-        indications,
-        markerMap,
-        startTime,
-        endTime,
-        locality,
-        active,
-      });
-      const savedTianguis = await newTianguis.save();
-      res.status(201).json(ApiResponse.successResponse("Tianguis creado con éxito", savedTianguis));
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
-      res.status(400).json(ApiResponse.errorResponse(errorMessage));
-    }
-  };
 
-  // Obtener un tianguis por su ID
-  static getTianguisById = async (req: Request, res: Response) => {
+   // Obtener un tianguis por su ID
+   static getTianguisById = async (req: Request, res: Response) => {
     const { id } = req.params;
     try {
       if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -132,11 +109,77 @@ export default class TianguisController {
       res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
     }
   };
+  
+  // Crear un nuevo tianguis
+      static createTianguis = async (req: Request, res: Response) => {
+        try {
+          const {
+            userId,
+            name,
+            color,
+            photo,
+            indications,
+            markerMap,
+            locality,
+            active,
+            schedule, // El horario se recibe como un objeto { dayWeek, indications, startTime, endTime }
+          } = req.body;
+      
+          // Crear el tianguis
+          const newTianguis = new Tianguis({
+            userId,
+            name,
+            color,
+            photo,
+            indications,
+            markerMap,
+            locality,
+            active,
+          });
+      
+          const savedTianguis = await newTianguis.save();
+      
+          // Crear el horario asociado al tianguis
+          const newSchedule = new ScheduleTianguis({
+            tianguisId: savedTianguis._id, // Referencia al tianguis creado
+            dayWeek: schedule.dayWeek,
+            indications: schedule.indications,
+            startTime: schedule.startTime,
+            endTime: schedule.endTime,
+          });
+      
+          const savedSchedule = await newSchedule.save();
+      
+          res.status(201).json(
+            ApiResponse.successResponse("Tianguis y horario creados con éxito", {
+              tianguis: savedTianguis,
+              schedule: savedSchedule,
+            })
+          );
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
+          res.status(400).json(ApiResponse.errorResponse(errorMessage));
+        }
+      };
+      
+
+ 
 
   // Actualizar un tianguis
   static updateTianguis = async (req: Request, res: Response) => {
-    const { id } = req.params;
-    const { userId, name, color, dayWeek, photo, indications, markerMap, startTime, endTime, locality, active } = req.body;
+    const { id } = req.params; // ID del tianguis
+    const {
+      userId,
+      name,
+      color,
+      photo,
+      indications,
+      markerMap,
+      locality,
+      active,
+      schedule, // Datos del horario { dayWeek, indications, startTime, endTime }
+    } = req.body;
+
     try {
       if (!mongoose.Types.ObjectId.isValid(id)) {
         res.status(400).json(ApiResponse.errorResponse("El ID proporcionado no es válido", 400));
@@ -147,12 +190,9 @@ export default class TianguisController {
       if (userId) updateData.userId = userId;
       if (name) updateData.name = name;
       if (color) updateData.color = color;
-      if (dayWeek) updateData.dayWeek = dayWeek;
       if (photo) updateData.photo = photo;
       if (indications) updateData.indications = indications;
       if (markerMap) updateData.markerMap = markerMap;
-      if (startTime) updateData.startTime = startTime;
-      if (endTime) updateData.endTime = endTime;
       if (locality) updateData.locality = locality;
       if (active !== undefined) updateData.active = active;
 
