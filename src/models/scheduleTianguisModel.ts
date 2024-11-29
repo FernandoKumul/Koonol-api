@@ -6,7 +6,6 @@ export interface IScheduleTianguisModel extends IScheduleTianguis, Document {}
 const scheduleTianguisSchema: Schema = new Schema({
   tianguisId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tianguis', required: true },
   dayWeek: { type: String, required: true },
-  indications: { type: String, required: true },
   startTime: { type: String, required: true },
   endTime: { type: String, required: true },
   creationDate: { type: Date, default: Date.now },

@@ -15,6 +15,12 @@ export const tianguisSchema = z.object({
       z.number().min(-90).max(90),  // Latitud
     ]),
   }),
+
+  schedule: z.object({
+    dayWeek: z.string().min(1, "El día de la semana es requerido"),
+    startTime: z.string().min(1, "La hora de inicio es requerida"),
+    endTime: z.string().min(1, "La hora de finalización es requerida")
+  }),
   
   locality: z.string().min(1, "La localidad es requerida"),
   active: z.boolean(),

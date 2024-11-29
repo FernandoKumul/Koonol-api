@@ -17,7 +17,7 @@ const tianguisSchema: Schema = new Schema({
   active: { type: Boolean, default: true },
   creationDate: { type: Date, default: Date.now },
   updateDate: { type: Date, default: Date.now },
-});
+}, {id: false});
 
 // Middleware para actualizar la fecha de modificación
 tianguisSchema.pre("save", function (next) {

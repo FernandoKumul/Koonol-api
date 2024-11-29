@@ -153,7 +153,6 @@ export default class TianguisController {
           const newSchedule = new ScheduleTianguis({
             tianguisId: savedTianguis._id, // Referencia al tianguis creado
             dayWeek: schedule.dayWeek,
-            indications: schedule.indications,
             startTime: schedule.startTime,
             endTime: schedule.endTime,
           });
