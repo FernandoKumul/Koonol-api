@@ -19,11 +19,11 @@ export default class LocationSalesStallsController {
   // Crear un nuevo registro de LocationSalesStalls
   static createLocationSalesStalls = async (req: Request, res: Response) => {
     try {
-      const { salesStallsId, tianguisId, markerMap } = req.body;
+      const { salesStallsId, scheduleTianguisId, markerMap } = req.body;
 
       const newLocationSalesStalls = new LocationSalesStalls({
         salesStallsId,
-        tianguisId,
+        scheduleTianguisId,
         markerMap,
       });
 

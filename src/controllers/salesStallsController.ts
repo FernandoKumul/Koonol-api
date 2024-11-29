@@ -3,6 +3,7 @@ import SalesStalls from "../models/salesStallsModel";
 import { ApiResponse } from "../utils/ApiResponse";
 import ParseQueryToNumber from "../utils/ParseQueryToNumber";
 import mongoose from "mongoose";
+import Tianguis from "../models/tianguisModel";
 
 export default class SalesStallsController {
 
@@ -370,4 +371,62 @@ export default class SalesStallsController {
       res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
     }
   }
+
+  static getAllSalesStallByTianguisId = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    try {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json(ApiResponse.errorResponse("El ID proporcionado no es válido", 400));
+        return;
+      }
+
+      const salesStall = await Tianguis.aggregate([
+        { $match: { _id: new mongoose.Types.ObjectId(id) } },
+        {
+          $lookup: {
+            from: "scheduletianguis",
+            localField: "_id", 
+            foreignField: "tianguisId",
+            as: "schedules"
+          }
+        },
+        { $unwind: "$schedules" },
+        {
+          $lookup: {
+            from: "locationsalesstalls",
+            localField: "schedules._id",
+            foreignField: "scheduleTianguisId",
+            as: "locations"
+          }
+        },
+        { $unwind: "$locations" },
+        {
+          $lookup: {
+            from: "salesstalls",
+            localField: "locations.salesStallsId",
+            foreignField: "_id",
+            as: "salesStalls"
+          }
+        },
+        { $unwind: "$salesStalls" },
+        {
+          $group: {
+            _id: "$salesStalls._id",
+            name: { $first: "$salesStalls.name" },
+            photos: { $first: "$salesStalls.photos" },
+          }
+        },
+        { $sort: { name: 1 } }
+      ])
+      if (!salesStall) {
+        res.status(404).json(ApiResponse.errorResponse("Puesto de ventas no encontrado", 404));
+        return;
+      }
+
+      res.status(200).json(ApiResponse.successResponse("Puesto de ventas encontrado", salesStall));
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
+      res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
+    }
+  };
 }
