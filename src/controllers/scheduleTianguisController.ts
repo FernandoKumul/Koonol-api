@@ -8,7 +8,7 @@ export default class ScheduleTianguisController {
   // Obtener todos los horarios de tianguis
   static getScheduleTianguis = async (req: Request, res: Response) => {
     try {
-      const scheduleTianguis = await ScheduleTianguis.find();
+      const scheduleTianguis = await ScheduleTianguis.find().populate("tianguisId");
       res.status(200).json(ApiResponse.successResponse("Horarios de Tianguis encontrados", scheduleTianguis));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
@@ -19,12 +19,11 @@ export default class ScheduleTianguisController {
   // Crear un nuevo horario de tianguis
   static createScheduleTianguis = async (req: Request, res: Response) => {
     try {
-      const { tianguisId, dayWeek, indications, startTime, endTime } = req.body;
+      const { tianguisId, dayWeek, startTime, endTime } = req.body;
 
       const newSchedule = new ScheduleTianguis({
         tianguisId,
         dayWeek,
-        indications,
         startTime,
         endTime,
       });
