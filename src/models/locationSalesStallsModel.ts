@@ -5,7 +5,7 @@ export interface ILocationSalesStallsModel extends ILocationSalesStalls, Documen
 
 const locationSalesStallsSchema: Schema = new Schema({
     salesStallsId: { type: mongoose.Schema.Types.ObjectId, ref: 'SalesStalls', required: true },
-    tianguisId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tianguis', required: true },
+    scheduleTianguisId: { type: mongoose.Schema.Types.ObjectId, ref: 'ScheduleTianguis', required: true },
     markerMap: {
       type: { type: String, enum: ['Point'], required: true },
       coordinates: { type: [Number], required: true }

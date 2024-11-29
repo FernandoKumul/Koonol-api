@@ -3,6 +3,7 @@ import SalesStalls from "../models/salesStallsModel";
 import { ApiResponse } from "../utils/ApiResponse";
 import ParseQueryToNumber from "../utils/ParseQueryToNumber";
 import mongoose from "mongoose";
+import Tianguis from "../models/tianguisModel";
 
 export default class SalesStallsController {
 
@@ -26,7 +27,7 @@ export default class SalesStallsController {
       const sort = (req.query.sort as string) || "newest";
       const active = req.query.active ? req.query.active === 'true' : undefined;
       const probation = req.query.probation ? req.query.probation === 'true' : undefined;
-      const type = req.query.type as string;
+      const type = req.query.type ? req.query.type === 'true' : undefined;
       const sellerId = req.query.sellerId as string;
       const subCategoryId = req.query.subCategoryId as string;
 
@@ -62,7 +63,7 @@ export default class SalesStallsController {
       if (probation !== undefined) {
         searchFilters.probation = probation;
       }
-      if (type) {
+      if (type !== undefined) {
         searchFilters.type = type;
       }
       if (sellerId) {
@@ -127,7 +128,7 @@ export default class SalesStallsController {
         return;
       }
 
-      const salesStall = await SalesStalls.findById(id).populate({ path: "subCategoryId", populate: { path: "categoryId" } }).populate("sellerId");
+      const salesStall = await SalesStalls.findById(id).populate({ path: "subCategoryId", populate: { path: "categoryId" } }).populate("sellerId").populate({ path: "locations", populate: { path: "scheduleTianguisId" } });
       if (!salesStall) {
         res.status(404).json(ApiResponse.errorResponse("Puesto de ventas no encontrado", 404));
         return;
@@ -156,7 +157,7 @@ export default class SalesStallsController {
       if (name) updateData.name = name;
       if (photos) updateData.photos = photos;
       if (description) updateData.description = description;
-      if (type) updateData.type = type;
+      if (type !== undefined) updateData.type = type;
       if (probation !== undefined) updateData.probation = probation;
       if (active !== undefined) updateData.active = active;
 
@@ -200,6 +201,229 @@ export default class SalesStallsController {
     try {
       const salesStalls = await SalesStalls.find({}, { name: 1 });
       res.status(200).json(ApiResponse.successResponse("Puestos de ventas encontrados", salesStalls));
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
+      res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
+    }
+  };
+
+  static searchPublicSalesStalls = async (req: Request, res: Response) => {
+    try {
+      const page = ParseQueryToNumber(req.query.page as string, 1);
+      const limit = ParseQueryToNumber(req.query.limit as string, 10);
+      const search = (req.query.search as string) || "";
+      const sort = (req.query.sort as string) || "most-relevant";
+      const active = req.query.active ? req.query.active === 'true' : undefined;
+      const probation = req.query.probation ? req.query.probation === 'true' : undefined;
+      const type = req.query.type as string;
+      const sellerId = req.query.sellerId as string;
+      const subCategoryId = req.query.subCategoryId as string;
+
+      let sortQuery: any = { };
+      switch (sort) {
+        case "most-relevant":
+          sortQuery = { 
+            hasActivePromotions: -1,
+            creationDate: -1 
+          };
+          break;
+        case "newest":
+          sortQuery = { creationDate: -1 };
+          break;
+        case "oldest":
+          sortQuery = { creationDate: 1 };
+          break;
+        case "a-z":
+          sortQuery = { name: 1 };
+          break;
+        case "z-a":
+          sortQuery = { name: -1 };
+          break;
+        default:
+          sortQuery = { 
+            hasActivePromotions: -1,
+            creationDate: -1 
+          };
+      }
+
+      const offset = (page - 1) * limit;
+      const searchFilters: any = {
+        $or: [
+          { name: { $regex: search, $options: "i" } },
+          { description: { $regex: search, $options: "i" } },
+        ],
+      };
+
+      if (active !== undefined) {
+        searchFilters.active = active;
+      }
+      if (probation !== undefined) {
+        searchFilters.probation = probation;
+      }
+      if (type) {
+        searchFilters.type = type;
+      }
+      if (sellerId) {
+        searchFilters.sellerId = sellerId;
+      }
+      if (subCategoryId) {
+        searchFilters.subCategoryId = subCategoryId;
+      }
+
+      const currentDate = new Date();
+
+      const salesStallsList = await SalesStalls.aggregate([
+        {
+          $lookup: {
+            from: "promotions",
+            localField: "_id",
+            foreignField: "salesStallId",
+            as: "promotions"
+          }
+        },
+        {
+          $lookup: {
+            from: "subcategories",
+            localField: "subCategoryId",
+            foreignField: "_id",
+            as: "subcategory"
+          }
+        },
+        {
+          $unwind: { path: "$subcategory", preserveNullAndEmptyArrays: true }
+        },
+        {
+          $lookup: {
+            from: "categories",
+            localField: "subcategory.categoryId",
+            foreignField: "_id",
+            as: "category"
+          }
+        },
+        {
+          $unwind: { path: "$category", preserveNullAndEmptyArrays: true }
+        },
+        {
+          $match: {
+            $and: [
+              { "name": { $regex: search, $options: "i" } },
+              searchFilters,
+            ],
+          }
+        },
+        {
+          $addFields: {
+            hasActivePromotions: {
+              $gt: [
+                {
+                  $size: {
+                    $filter: {
+                      input: "$promotions",
+                      as: "promotion",
+                      cond: {
+                        $and: [
+                          { $lte: ["$$promotion.startDate", currentDate] },
+                          { $gte: ["$$promotion.endDate", currentDate] }
+                        ]
+                      }
+                    }
+                  }
+                },
+                0
+              ]
+            }
+          }
+        },
+        {
+          $facet: {
+            data: [
+              {
+                $project: {
+                  name: 1,
+                  hasActivePromotions: 1,
+                  "subcategory.name": 1,
+                  "subcategory._id": 1,
+                  "category._id": 1,
+                  "category.name": 1,
+                  photos: 1,
+                  creationDate: 1,
+                  type: 1,
+                  active: 1,
+                }
+              },
+              { $sort: sortQuery },
+              { $skip: offset },
+              { $limit: limit },
+            ],
+            totalSaleStalls: [{ $count: "count" }],
+          }
+        },
+      ]);
+
+      res.status(200).json(
+        ApiResponse.successResponse("Puestos de ventas encontrados", {
+          count: salesStallsList[0].totalSaleStalls[0]?.count || 0,
+          results: salesStallsList[0].data,
+        })
+      );
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
+      res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
+    }
+  }
+
+  static getAllSalesStallByTianguisId = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    try {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json(ApiResponse.errorResponse("El ID proporcionado no es válido", 400));
+        return;
+      }
+
+      const salesStall = await Tianguis.aggregate([
+        { $match: { _id: new mongoose.Types.ObjectId(id) } },
+        {
+          $lookup: {
+            from: "scheduletianguis",
+            localField: "_id", 
+            foreignField: "tianguisId",
+            as: "schedules"
+          }
+        },
+        { $unwind: "$schedules" },
+        {
+          $lookup: {
+            from: "locationsalesstalls",
+            localField: "schedules._id",
+            foreignField: "scheduleTianguisId",
+            as: "locations"
+          }
+        },
+        { $unwind: "$locations" },
+        {
+          $lookup: {
+            from: "salesstalls",
+            localField: "locations.salesStallsId",
+            foreignField: "_id",
+            as: "salesStalls"
+          }
+        },
+        { $unwind: "$salesStalls" },
+        {
+          $group: {
+            _id: "$salesStalls._id",
+            name: { $first: "$salesStalls.name" },
+            photos: { $first: "$salesStalls.photos" },
+          }
+        },
+        { $sort: { name: 1 } }
+      ])
+      if (!salesStall) {
+        res.status(404).json(ApiResponse.errorResponse("Puesto de ventas no encontrado", 404));
+        return;
+      }
+
+      res.status(200).json(ApiResponse.successResponse("Puesto de ventas encontrado", salesStall));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
       res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));

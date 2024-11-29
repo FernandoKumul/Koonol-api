@@ -8,7 +8,7 @@ export default class ScheduleTianguisController {
   // Obtener todos los horarios de tianguis
   static getScheduleTianguis = async (req: Request, res: Response) => {
     try {
-      const scheduleTianguis = await ScheduleTianguis.find();
+      const scheduleTianguis = await ScheduleTianguis.find().populate("tianguisId");
       res.status(200).json(ApiResponse.successResponse("Horarios de Tianguis encontrados", scheduleTianguis));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
@@ -19,12 +19,11 @@ export default class ScheduleTianguisController {
   // Crear un nuevo horario de tianguis
   static createScheduleTianguis = async (req: Request, res: Response) => {
     try {
-      const { tianguisId, dayWeek, indications, startTime, endTime } = req.body;
+      const { tianguisId, dayWeek, startTime, endTime } = req.body;
 
       const newSchedule = new ScheduleTianguis({
         tianguisId,
         dayWeek,
-        indications,
         startTime,
         endTime,
       });
@@ -105,6 +104,28 @@ export default class ScheduleTianguisController {
       }
 
       res.status(200).json(ApiResponse.successResponse("Horario de Tianguis eliminado con éxito", deletedSchedule));
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
+      res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
+    }
+  };
+
+  // Obtener horarios de tianguis por ID de tianguis
+  static getScheduleTianguisByTianguisId = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    try {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json(ApiResponse.errorResponse("El ID proporcionado no es válido", 400));
+        return;
+      }
+
+      const schedule = await ScheduleTianguis.find({ tianguisId: id });
+      if (!schedule) {
+        res.status(404).json(ApiResponse.errorResponse("Horario de Tianguis no encontrado", 404));
+        return;
+      }
+
+      res.status(200).json(ApiResponse.successResponse("Horario de Tianguis encontrado", schedule));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
       res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));

@@ -9,12 +9,22 @@ const salesStallsSchema: Schema = new Schema({
   name: { type: String, required: true },      
   photos: { type: [String], required: true },   
   description: { type: String, required: true },
-  type: { type: String, required: true },       
+  type: { type: Boolean, required: true },       
   probation: { type: Boolean, required: true },  
   active: { type: Boolean, required: true },     
   creationDate: { type: Date, default: Date.now },
   updateDate: { type: Date, default: Date.now }   
+}, {id: false});
+
+salesStallsSchema.virtual('locations', {
+  ref: 'LocationSalesStalls',
+  localField: '_id',
+  foreignField: 'salesStallsId'
 });
+
+salesStallsSchema.set('toObject', { virtuals: true });
+salesStallsSchema.set('toJSON', { virtuals: true });
+
 
 salesStallsSchema.pre('save', function (next) {
   this.updateDate = new Date();
