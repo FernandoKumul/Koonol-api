@@ -19,17 +19,16 @@ export default class TianguisController {
   };
   
 
-  // Buscar tianguis con filtros, paginación y ordenamiento
   static searchTianguis = async (req: Request, res: Response) => {
     try {
       const page = ParseQueryToNumber(req.query.page as string, 1);
       const limit = ParseQueryToNumber(req.query.limit as string, 10);
       const search = (req.query.search as string) || "";
       const sort = (req.query.sort as string) || "newest";
-      const active = req.query.active ? req.query.active === 'true' : undefined;
-      const dayWeek = req.query.dayWeek as string;
+      const active = req.query.active ? req.query.active === "true" : undefined;
       const userId = req.query.userId as string;
-
+  
+      // Definir el ordenamiento
       let sortQuery = {};
       switch (sort) {
         case "newest":
@@ -47,8 +46,8 @@ export default class TianguisController {
         default:
           sortQuery = { creationDate: "desc" };
       }
-
-      const offset = (page - 1) * limit;
+  
+      // Definir los filtros de búsqueda
       const searchFilters: any = {
         $or: [
           { name: { $regex: search, $options: "i" } },
@@ -56,49 +55,58 @@ export default class TianguisController {
           { locality: { $regex: search, $options: "i" } },
         ],
       };
-
+  
       if (active !== undefined) {
         searchFilters.active = active;
-      }
-      if (dayWeek) {
-        searchFilters.dayWeek = dayWeek;
       }
       if (userId) {
         searchFilters.userId = userId;
       }
-
+  
+      // Calcular el offset para la paginación
+      const offset = (page - 1) * limit;
+  
+      // Obtener la lista de tianguis con horarios
       const tianguisList = await Tianguis.find(searchFilters)
         .skip(offset)
         .limit(limit)
-        .sort(sortQuery);
-
+        .sort(sortQuery)
+        .populate("schedule");
+  
+      // Contar el total de documentos que coinciden con los filtros
       const totalTianguis = await Tianguis.countDocuments(searchFilters);
-
+  
+      // Responder con los resultados
       res.status(200).json(
         ApiResponse.successResponse("Tianguis encontrados", {
           count: totalTianguis,
           results: tianguisList,
-          // hasNextPage: offset + tianguisList.length < totalTianguis
         })
       );
-
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
+      console.error("Error en searchTianguis:", errorMessage); // Log del error para depuración
       res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
     }
   };
+  
 
    // Obtener un tianguis por su ID
    static getTianguisById = async (req: Request, res: Response) => {
     const { id } = req.params;
     try {
+      // Validar el ID
       if (!mongoose.Types.ObjectId.isValid(id)) {
         res.status(400).json(ApiResponse.errorResponse("El ID proporcionado no es válido", 400));
         return;
       }
-
-      const tianguis = await Tianguis.findById(id);
+  
+      // Buscar el tianguis por ID e incluir los horarios con populate
+      const tianguis = await Tianguis.findById(id).populate("schedule");
+  
+      // Verificar si el tianguis existe
       if (!tianguis) {
+        console.log("Tianguis no encontrado para el ID:", id);
         res.status(404).json(ApiResponse.errorResponse("Tianguis no encontrado", 404));
         return;
       }
@@ -106,9 +114,11 @@ export default class TianguisController {
       res.status(200).json(ApiResponse.successResponse("Tianguis encontrado", tianguis));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
+      console.error("Error al obtener el tianguis por ID:", errorMessage);
       res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
     }
   };
+  
   
   // Crear un nuevo tianguis
       static createTianguis = async (req: Request, res: Response) => {
