@@ -109,4 +109,26 @@ export default class ScheduleTianguisController {
       res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
     }
   };
+
+  // Obtener horarios de tianguis por ID de tianguis
+  static getScheduleTianguisByTianguisId = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    try {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        res.status(400).json(ApiResponse.errorResponse("El ID proporcionado no es válido", 400));
+        return;
+      }
+
+      const schedule = await ScheduleTianguis.find({ tianguisId: id });
+      if (!schedule) {
+        res.status(404).json(ApiResponse.errorResponse("Horario de Tianguis no encontrado", 404));
+        return;
+      }
+
+      res.status(200).json(ApiResponse.successResponse("Horario de Tianguis encontrado", schedule));
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
+      res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
+    }
+  };
 }
