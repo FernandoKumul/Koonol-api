@@ -6,9 +6,9 @@ import { tianguisUpdateSchema } from "../schemas/TianguisSchema/tianguisUpdateSc
 
 const router = express.Router();
 
-router.get('/', TianguisController.getTianguis);
+router.get('/all', TianguisController.getTianguis);
 router.post('/', validateData(tianguisSchema), TianguisController.createTianguis);
-router.get('/search', TianguisController.searchTianguis);
+router.get('/', TianguisController.searchTianguis);
 router.get('/:id', TianguisController.getTianguisById);
 router.put('/:id', validateData(tianguisUpdateSchema), TianguisController.updateTianguis);
 router.delete('/:id', TianguisController.deleteTianguis);

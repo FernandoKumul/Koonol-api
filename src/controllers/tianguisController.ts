@@ -76,7 +76,7 @@ export default class TianguisController {
         ApiResponse.successResponse("Tianguis encontrados", {
           count: totalTianguis,
           results: tianguisList,
-          hasNextPage: offset + tianguisList.length < totalTianguis
+          // hasNextPage: offset + tianguisList.length < totalTianguis
         })
       );
 

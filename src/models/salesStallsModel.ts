@@ -16,6 +16,16 @@ const salesStallsSchema: Schema = new Schema({
   updateDate: { type: Date, default: Date.now }   
 });
 
+salesStallsSchema.virtual('locations', {
+  ref: 'LocationSalesStalls',
+  localField: '_id',
+  foreignField: 'salesStallsId'
+});
+
+salesStallsSchema.set('toObject', { virtuals: true });
+salesStallsSchema.set('toJSON', { virtuals: true });
+
+
 salesStallsSchema.pre('save', function (next) {
   this.updateDate = new Date();
   next();
