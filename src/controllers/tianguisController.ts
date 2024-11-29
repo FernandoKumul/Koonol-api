@@ -223,21 +223,32 @@ export default class TianguisController {
   static deleteTianguis = async (req: Request, res: Response) => {
     const { id } = req.params;
     try {
+      // Validar el ID proporcionado
       if (!mongoose.Types.ObjectId.isValid(id)) {
+        console.log("ID no válido:", id);
         res.status(400).json(ApiResponse.errorResponse("El ID proporcionado no es válido", 400));
         return;
       }
-
+  
+      // Eliminar los horarios asociados al Tianguis
+      const deletedSchedules = await ScheduleTianguis.deleteMany({ tianguisId: id });
+  
+      // Eliminar el Tianguis
       const deletedTianguis = await Tianguis.findByIdAndDelete(id);
       if (!deletedTianguis) {
         res.status(404).json(ApiResponse.errorResponse("Tianguis no encontrado", 404));
         return;
       }
-
-      res.status(200).json(ApiResponse.successResponse("Tianguis eliminado con éxito", deletedTianguis));
+  
+      res.status(200).json(ApiResponse.successResponse("Tianguis y horarios asociados eliminados con éxito", {
+        tianguis: deletedTianguis,
+        deletedSchedules: deletedSchedules.deletedCount, // Cantidad de horarios eliminados
+      }));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Ocurrió un error";
+      console.error("Error al eliminar el Tianguis:", errorMessage);
       res.status(500).json(ApiResponse.errorResponse(errorMessage, 500));
     }
   };
+  
 }
