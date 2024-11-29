@@ -14,7 +14,7 @@ const salesStallsSchema: Schema = new Schema({
   active: { type: Boolean, required: true },     
   creationDate: { type: Date, default: Date.now },
   updateDate: { type: Date, default: Date.now }   
-});
+}, {id: false});
 
 salesStallsSchema.virtual('locations', {
   ref: 'LocationSalesStalls',
