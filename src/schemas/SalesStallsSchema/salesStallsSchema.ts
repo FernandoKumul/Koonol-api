@@ -7,7 +7,7 @@ export const salesStallsSchema = z.object({
   name: z.string().min(1, "El nombre es requerido"),
   photos: z.array(z.string().url({ message: "Las fotos deben ser URLs válidas" })),
   description: z.string().min(1, "La descripción es requerida"),
-  type: z.string().min(1, "El tipo es requerido"),
+  type: z.boolean(),
   probation: z.boolean(),
   active: z.boolean(),
 });

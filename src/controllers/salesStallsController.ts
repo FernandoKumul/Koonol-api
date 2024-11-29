@@ -26,7 +26,7 @@ export default class SalesStallsController {
       const sort = (req.query.sort as string) || "newest";
       const active = req.query.active ? req.query.active === 'true' : undefined;
       const probation = req.query.probation ? req.query.probation === 'true' : undefined;
-      const type = req.query.type as string;
+      const type = req.query.type ? req.query.type === 'true' : undefined;
       const sellerId = req.query.sellerId as string;
       const subCategoryId = req.query.subCategoryId as string;
 
@@ -62,7 +62,7 @@ export default class SalesStallsController {
       if (probation !== undefined) {
         searchFilters.probation = probation;
       }
-      if (type) {
+      if (type !== undefined) {
         searchFilters.type = type;
       }
       if (sellerId) {
@@ -156,7 +156,7 @@ export default class SalesStallsController {
       if (name) updateData.name = name;
       if (photos) updateData.photos = photos;
       if (description) updateData.description = description;
-      if (type) updateData.type = type;
+      if (type !== undefined) updateData.type = type;
       if (probation !== undefined) updateData.probation = probation;
       if (active !== undefined) updateData.active = active;
 

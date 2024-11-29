@@ -4,7 +4,7 @@ export interface ISalesStalls {
     name: string;                  
     photos: string[];              
     description: string;           
-    type: string;                  
+    type: boolean;                  
     probation: boolean;            
     active: boolean;               
   }
