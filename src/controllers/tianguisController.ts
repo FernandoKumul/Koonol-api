@@ -132,7 +132,6 @@ export default class TianguisController {
             markerMap,
             locality,
             active,
-            schedule, // El horario se recibe como un objeto { dayWeek, indications, startTime, endTime }
           } = req.body;
       
           // Crear el tianguis
@@ -148,21 +147,9 @@ export default class TianguisController {
           });
       
           const savedTianguis = await newTianguis.save();
-      
-          // Crear el horario asociado al tianguis
-          const newSchedule = new ScheduleTianguis({
-            tianguisId: savedTianguis._id, // Referencia al tianguis creado
-            dayWeek: schedule.dayWeek,
-            startTime: schedule.startTime,
-            endTime: schedule.endTime,
-          });
-      
-          const savedSchedule = await newSchedule.save();
-      
           res.status(201).json(
             ApiResponse.successResponse("Tianguis y horario creados con éxito", {
               ...savedTianguis.toObject(),
-              schedule: [savedSchedule.toObject()],
             })
           );
         } catch (error) {
@@ -186,7 +173,6 @@ export default class TianguisController {
       markerMap,
       locality,
       active,
-      schedule, // Datos del horario { dayWeek, startTime, endTime }
     } = req.body;
 
     try {
@@ -209,12 +195,6 @@ export default class TianguisController {
       if (!updatedTianguis) {
         res.status(404).json(ApiResponse.errorResponse("Tianguis no encontrado", 404));
         return;
-      }
-
-      const updateSchedule = await ScheduleTianguis.findByIdAndUpdate(schedule._id, {dayWeek: schedule.dayWeek, startTime: schedule.startTime, endTime: schedule.endTime}, { new: true });
-      if (!updateSchedule) {
-        res.status(404).json(ApiResponse.errorResponse("Horario no encontrado", 404));
-        return
       }
 
       res.status(200).json(ApiResponse.successResponse("Tianguis actualizado con éxito", updatedTianguis));

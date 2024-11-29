@@ -11,5 +11,6 @@ router.post('/', validateData(scheduleTianguisSchema), ScheduleTianguisControlle
 router.get('/:id', ScheduleTianguisController.getScheduleTianguisById);
 router.put('/:id', validateData(scheduleTianguisUpdateSchema), ScheduleTianguisController.updateScheduleTianguis);
 router.delete('/:id', ScheduleTianguisController.deleteScheduleTianguis);
+router.get('/tianguis/:id', ScheduleTianguisController.getScheduleTianguisByTianguisId);
 
 export default router;
