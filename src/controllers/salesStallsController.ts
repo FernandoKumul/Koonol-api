@@ -245,8 +245,6 @@ export default class SalesStallsController {
           };
       }
 
-      console.log(sortQuery);
-
       const offset = (page - 1) * limit;
       const searchFilters: any = {
         $or: [
