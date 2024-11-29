@@ -15,6 +15,12 @@ export const tianguisUpdateSchema = z.object({
       ]).optional(),
     }).optional(),
     
+    schedule: z.object({
+      _id: z.string().regex(/^[0-9a-fA-F]{24}$/, "Debe ser un ObjectId válido"),
+      dayWeek: z.string().min(1, "El día de la semana es requerido"),
+      startTime: z.string().min(1, "La hora de inicio es requerida"),
+      endTime: z.string().min(1, "La hora de finalización es requerida")
+    }),
     
     locality: z.string().min(1, "La localidad es requerida").optional(),
     active: z.boolean().optional(),
